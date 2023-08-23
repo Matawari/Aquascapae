@@ -122,7 +122,7 @@ NavMeshSettings:
     preserveTilesOutsideBounds: 0
     debug:
       m_Flags: 0
-  m_NavMeshData: {fileID: 0}
+  m_NavMeshData: {fileID: 23800000, guid: 1ab06f1c9dede854aa10e037a9c8d957, type: 2}
 --- !u!1 &983162
 GameObject:
   m_ObjectHideFlags: 0
@@ -22808,6 +22808,7 @@ GameObject:
   - component: {fileID: 529122850}
   - component: {fileID: 529122849}
   - component: {fileID: 529122848}
+  - component: {fileID: 529122854}
   m_Layer: 0
   m_Name: Fish 1 (1)
   m_TagString: Untagged
@@ -22823,7 +22824,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 529122847}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 0.2
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -22854,18 +22855,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cedfeb19930f6ae46b75d28adf2fc8ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 2
-  rotationSpeed: 2
-  detectionRadius: 0.2
-  isPredator: 0
   hidingSpots:
   - {fileID: 1315236888}
   - {fileID: 770945879}
   - {fileID: 78371611}
   foodSource: {fileID: 2143757608}
+  speed: 2
+  rotationSpeed: 2
+  detectionRadius: 0.2
+  isPredator: 0
   hungerTimer: 30
-  boundaryCollider: {fileID: 1900404550}
-  fishSize: 1
+  desiredMinDepth: 0
+  desiredMaxDepth: 10
 --- !u!136 &529122850
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -22947,13 +22948,35 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 529122847}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 61.415, y: 3.017, z: -1.7139857}
+  m_LocalPosition: {x: 61.415, y: 2.9329998, z: -1.7139857}
   m_LocalScale: {x: -0.01658186, y: -0.01658186, z: -0.01658186}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 39
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!195 &529122854
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529122847}
+  m_Enabled: 1
+  m_AgentTypeID: -1372625422
+  m_Radius: 0.59
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 1.9999999
+  m_BaseOffset: -0.92
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &529170576
 GameObject:
   m_ObjectHideFlags: 0
@@ -28647,7 +28670,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 685666506}
-  m_LocalRotation: {x: -0.04553855, y: 0.114285275, z: 0.005244295, w: 0.99238986}
+  m_LocalRotation: {x: -0.04553855, y: 0.114285305, z: 0.005244297, w: 0.99238986}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -75589,6 +75612,69 @@ Transform:
   m_Father: {fileID: 4342457101959176388}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1823280315
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1823280316}
+  - component: {fileID: 1823280317}
+  m_Layer: 12
+  m_Name: NavMeshSurface
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1823280316
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1823280315}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.225, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2007489292}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1823280317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1823280315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AgentTypeID: -1372625422
+  m_CollectObjects: 1
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 16
+  m_UseGeometry: 1
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: 20cb72dcfa284cf4b9c63facecf755d3, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &1824081702
 GameObject:
   m_ObjectHideFlags: 0
@@ -80158,7 +80244,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7146521406498821007, guid: b47100046919c5c418e8868faed93016, type: 3}
       propertyPath: m_Layer
-      value: 12
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: -7146521406498821007, guid: b47100046919c5c418e8868faed93016, type: 3}
       propertyPath: m_IsActive
@@ -80312,6 +80398,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: b47100046919c5c418e8868faed93016, type: 3}
       insertIndex: -1
       addedObject: {fileID: 78371611}
+    - targetCorrespondingSourceObject: {fileID: -1255605710908113952, guid: b47100046919c5c418e8868faed93016, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1823280316}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: b47100046919c5c418e8868faed93016, type: 3}
       insertIndex: -1
@@ -80322,6 +80411,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -7146521406498821007, guid: b47100046919c5c418e8868faed93016, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2007489291}
+    - targetCorrespondingSourceObject: {fileID: -7146521406498821007, guid: b47100046919c5c418e8868faed93016, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2007489295}
     - targetCorrespondingSourceObject: {fileID: -1599826595754709761, guid: b47100046919c5c418e8868faed93016, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1033884587}
@@ -85426,6 +85518,42 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.34268674, y: 0.34046516, z: 0.4900001}
   m_Center: {x: -0.21872972, y: 0.00000011920929, z: 0.000000014901163}
+--- !u!4 &2007489292 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -1255605710908113952, guid: b47100046919c5c418e8868faed93016, type: 3}
+  m_PrefabInstance: {fileID: 1911941067}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2007489295
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007489279}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AgentTypeID: -1372625422
+  m_CollectObjects: 1
+  m_Size: {x: 0.36, y: -0.5, z: 1.04}
+  m_Center: {x: -0.35, y: 0.01, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 16
+  m_UseGeometry: 1
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: d64d606c12751754d8b8c9545edad82c, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &2012224129
 GameObject:
   m_ObjectHideFlags: 0
@@ -90548,6 +90676,7 @@ GameObject:
   - component: {fileID: 2143757610}
   - component: {fileID: 2143757609}
   - component: {fileID: 2143757614}
+  - component: {fileID: 2143757615}
   m_Layer: 0
   m_Name: Fish 1
   m_TagString: Untagged
@@ -90567,18 +90696,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cedfeb19930f6ae46b75d28adf2fc8ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 3
-  rotationSpeed: 3
-  detectionRadius: 0.2
-  isPredator: 0
   hidingSpots:
   - {fileID: 1315236888}
   - {fileID: 770945879}
   - {fileID: 78371611}
   foodSource: {fileID: 0}
+  speed: 3
+  rotationSpeed: 3
+  detectionRadius: 0.2
+  isPredator: 0
   hungerTimer: 30
-  boundaryCollider: {fileID: 1900404550}
-  fishSize: 1
+  desiredMinDepth: 0
+  desiredMaxDepth: 10
 --- !u!136 &2143757610
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -90660,7 +90789,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2143757608}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 61.179943, y: 3.013, z: -1.7139857}
+  m_LocalPosition: {x: 61.179943, y: 2.929, z: -1.7139857}
   m_LocalScale: {x: -0.01658186, y: -0.01658186, z: -0.01658186}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -90675,7 +90804,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2143757608}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 0.2
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -90694,6 +90823,28 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!195 &2143757615
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2143757608}
+  m_Enabled: 1
+  m_AgentTypeID: -1372625422
+  m_Radius: 0.62
+  m_Speed: 2
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 1.9999999
+  m_BaseOffset: -0.92
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &2146204281
 GameObject:
   m_ObjectHideFlags: 0
@@ -92170,7 +92321,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2650234582403667058}
-  m_LocalRotation: {x: -0.045538556, y: 0.11428528, z: 0.005244296, w: 0.9923899}
+  m_LocalRotation: {x: -0.045538556, y: 0.114285335, z: 0.0052442993, w: 0.9923898}
   m_LocalPosition: {x: 61.206326, y: 2.884, z: -2.6755137}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

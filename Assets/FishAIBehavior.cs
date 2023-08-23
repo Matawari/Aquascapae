@@ -3,13 +3,17 @@ using UnityEngine.AI;
 
 public class FishAIBehavior : MonoBehaviour
 {
+    public Transform[] hidingSpots;
+    public GameObject foodSource;
+
     public float speed = 5.0f;
     public float rotationSpeed = 4.0f;
     public float detectionRadius = 5.0f;
     public bool isPredator = false;
-    public Transform[] hidingSpots;
-    public GameObject foodSource;
+    
     public float hungerTimer = 30.0f;
+    public float desiredMinDepth = 0f; // You can adjust the default value as needed
+    public float desiredMaxDepth = 10f; // You can adjust the default value as needed
 
     private bool isHungry = false;
     private float currentHungerTimer;
@@ -27,7 +31,7 @@ public class FishAIBehavior : MonoBehaviour
 
     private void Update()
     {
-        if (navAgent.remainingDistance < 0.5f)
+        if (navAgent.hasPath && navAgent.remainingDistance < 0.5f)
         {
             Wander();
         }
@@ -50,17 +54,29 @@ public class FishAIBehavior : MonoBehaviour
                 }
             }
         }
+
+        // Constrain fish to a certain depth
+        Vector3 constrainedPosition = transform.position;
+        constrainedPosition.y = Mathf.Clamp(constrainedPosition.y, desiredMinDepth, desiredMaxDepth);
+        transform.position = constrainedPosition;
     }
 
     void Wander()
     {
+        if (!navAgent.isOnNavMesh)
+        {
+            return; // Exit the method if the agent is not on a NavMesh
+        }
+
         Vector3 randomDirection = Random.insideUnitSphere * detectionRadius;
+        randomDirection.y = Mathf.Clamp(randomDirection.y, desiredMinDepth, desiredMaxDepth); // Ensure the fish stays within the desired depth
         randomDirection += transform.position;
         NavMeshHit hit;
-        NavMesh.SamplePosition(randomDirection, out hit, detectionRadius, 1);
-        Vector3 finalPosition = hit.position;
-
-        navAgent.SetDestination(finalPosition);
+        if (NavMesh.SamplePosition(randomDirection, out hit, detectionRadius, navAgent.areaMask))
+        {
+            Vector3 finalPosition = hit.position;
+            navAgent.SetDestination(finalPosition);
+        }
     }
 
     void Chase(Vector3 target)
@@ -92,11 +108,12 @@ public class FishAIBehavior : MonoBehaviour
 
     void SeekFood()
     {
-        if (foodSource)
+        if (foodSource && navAgent.isOnNavMesh)
         {
             navAgent.SetDestination(foodSource.transform.position);
         }
     }
+
 
     public void Eat()
     {
