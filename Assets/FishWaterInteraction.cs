@@ -4,7 +4,7 @@ public class FishWaterInteraction : MonoBehaviour
 {
     public WaterQualityManager waterQualityManager;
     public JSONLoader jsonLoader;
-    public FishInfoPanel fishInfoPanel; // Reference to FishInfoPanel
+    public FishInfoPanel fishInfoPanel;
 
     private FishBehavior fishBehavior;
     private bool isCollidingWithWater = false;
@@ -37,9 +37,17 @@ public class FishWaterInteraction : MonoBehaviour
             return;
         }
 
-        FishData fishData = fishBehavior.fishData; // Changed type here
+        FishData fishData = fishBehavior.fishData;
 
-        if (fishData.fishes[0].health <= 0 || fishData.fishes[0].stress >= 100) return;
+        if (fishData == null || fishData.fishes == null || fishData.fishes.Length == 0)
+        {
+            Debug.LogError("Fish data or fishes array is invalid.");
+            return;
+        }
+
+        Fish fish = fishData.fishes[0];
+
+        if (fish.health <= 0 || fish.stress >= 100) return;
 
         if (isCollidingWithWater && waterQualityManager != null && jsonLoader != null)
         {
@@ -52,7 +60,7 @@ public class FishWaterInteraction : MonoBehaviour
             float currentTemperature = jsonLoader.GetCurrentTemperature();
             float lightIntensityFactor = CalculateLightIntensityFactor();
 
-            Fish fish = fishData.fishes[0]; // Retrieve the specific Fish object
+            Fish currentFish = fishData.fishes[0]; // Renamed the variable here
 
             fishBehavior.ApplyWaterEffects(fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, co2AbsorptionRate, currentTemperature);
 
@@ -63,12 +71,11 @@ public class FishWaterInteraction : MonoBehaviour
 
             if (fishInfoPanel != null)
             {
-                // Update the FishInfoPanel here with relevant information
-                fishInfoPanel.UpdateFishInfo(fish);
+                fishInfoPanel.UpdateFishInfo(currentFish); // Used the renamed variable here
             }
         }
-    }
 
+    }
 
     private float CalculateLightIntensityFactor()
     {

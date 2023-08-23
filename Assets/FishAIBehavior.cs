@@ -10,10 +10,10 @@ public class FishAIBehavior : MonoBehaviour
     public float rotationSpeed = 4.0f;
     public float detectionRadius = 5.0f;
     public bool isPredator = false;
-    
+
     public float hungerTimer = 30.0f;
-    public float desiredMinDepth = 0f; // You can adjust the default value as needed
-    public float desiredMaxDepth = 10f; // You can adjust the default value as needed
+    public float desiredMinDepth = 0f;
+    public float desiredMaxDepth = 10f;
 
     private bool isHungry = false;
     private float currentHungerTimer;
@@ -23,15 +23,18 @@ public class FishAIBehavior : MonoBehaviour
     {
         navAgent = GetComponent<NavMeshAgent>();
         navAgent.speed = speed;
-        navAgent.angularSpeed = rotationSpeed * 100; // Convert to degrees per second
+        navAgent.angularSpeed = rotationSpeed * 100;
 
-        Wander();
-        currentHungerTimer = hungerTimer;
+        if (navAgent.isOnNavMesh)
+        {
+            Wander();
+            currentHungerTimer = hungerTimer;
+        }
     }
 
     private void Update()
     {
-        if (navAgent.hasPath && navAgent.remainingDistance < 0.5f)
+        if (navAgent.isOnNavMesh && navAgent.remainingDistance < 0.5f)
         {
             Wander();
         }
@@ -56,23 +59,22 @@ public class FishAIBehavior : MonoBehaviour
         }
 
         // Constrain fish to a certain depth
-        Vector3 constrainedPosition = transform.position;
-        constrainedPosition.y = Mathf.Clamp(constrainedPosition.y, desiredMinDepth, desiredMaxDepth);
-        transform.position = constrainedPosition;
+        Vector3 position = transform.position;
+        position.y = Mathf.Clamp(position.y, desiredMinDepth, desiredMaxDepth);
+        transform.position = position;
     }
 
     void Wander()
     {
         if (!navAgent.isOnNavMesh)
         {
-            return; // Exit the method if the agent is not on a NavMesh
+            return;
         }
 
         Vector3 randomDirection = Random.insideUnitSphere * detectionRadius;
-        randomDirection.y = Mathf.Clamp(randomDirection.y, desiredMinDepth, desiredMaxDepth); // Ensure the fish stays within the desired depth
         randomDirection += transform.position;
         NavMeshHit hit;
-        if (NavMesh.SamplePosition(randomDirection, out hit, detectionRadius, navAgent.areaMask))
+        if (NavMesh.SamplePosition(randomDirection, out hit, detectionRadius, 1))
         {
             Vector3 finalPosition = hit.position;
             navAgent.SetDestination(finalPosition);
@@ -81,11 +83,19 @@ public class FishAIBehavior : MonoBehaviour
 
     void Chase(Vector3 target)
     {
-        navAgent.SetDestination(target);
+        if (navAgent.isOnNavMesh)
+        {
+            navAgent.SetDestination(target);
+        }
     }
 
     void FleeFrom(Vector3 dangerSource)
     {
+        if (!navAgent.isOnNavMesh)
+        {
+            return;
+        }
+
         Vector3 fleeDirection = (transform.position - dangerSource).normalized * detectionRadius;
         navAgent.SetDestination(transform.position + fleeDirection);
     }
@@ -113,7 +123,6 @@ public class FishAIBehavior : MonoBehaviour
             navAgent.SetDestination(foodSource.transform.position);
         }
     }
-
 
     public void Eat()
     {

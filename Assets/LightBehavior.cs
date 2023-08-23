@@ -4,6 +4,7 @@ public class LightBehavior : MonoBehaviour
 {
     public WaterQualityManager waterQualityManager;
 
+    public string lightDataName; // Add this line
     private bool referencesValid = false;
 
     private void Start()

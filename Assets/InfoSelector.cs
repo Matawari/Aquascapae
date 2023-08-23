@@ -33,28 +33,49 @@ public class InfoSelector : MonoBehaviour
                     fishInfoPanel.gameObject.SetActive(false);
                     lightInfoPanel.gameObject.SetActive(false);
                     filterInfoPanel.gameObject.SetActive(false);
+                    plantInfoPanel.UpdatePlantInfo(selectedPlant);
                 }
                 else if (fishBehavior != null)
                 {
-                    Debug.Log("Hit object is a fish: " + fishBehavior.fish.name); // Changed to fish.name
-                    Fish selectedFish = jsonLoader.GetFishDataByName(fishBehavior.fish.name); // Changed to fish.name
-                    fishInfoPanel.gameObject.SetActive(true);
-                    plantInfoPanel.gameObject.SetActive(false);
-                    lightInfoPanel.gameObject.SetActive(false);
-                    filterInfoPanel.gameObject.SetActive(false);
-                    fishInfoPanel.UpdateFishInfo(selectedFish);
+                    string fishName = fishBehavior.fish.name;
+
+                    if (string.IsNullOrEmpty(fishName))
+                    {
+                        Debug.LogError("Fish name is null or empty.");
+                        return;
+                    }
+
+                    Debug.Log("Hit object is a fish: " + fishName);
+                    Fish selectedFish = jsonLoader.GetFishDataByName(fishName);
+
+                    if (selectedFish != null)
+                    {
+                        fishInfoPanel.gameObject.SetActive(true);
+                        plantInfoPanel.gameObject.SetActive(false);
+                        lightInfoPanel.gameObject.SetActive(false);
+                        filterInfoPanel.gameObject.SetActive(false);
+                        fishInfoPanel.UpdateFishInfo(selectedFish);
+                    }
+                    else
+                    {
+                        Debug.LogError($"selectedFish is null. Unable to find fish data for '{fishName}'.");
+                        foreach (var fish in jsonLoader.fishData.fishes)
+                        {
+                            Debug.Log("Fish in dataset: " + fish.name);
+                        }
+                    }
                 }
                 else if (lightBehavior != null)
                 {
                     Debug.Log("Hit object is a light.");
-                    // LightSetting selectedLight = jsonLoader.GetLightSettingByName(lightBehavior.lightDataName);
-                    // Uncomment the line above if you have a method to retrieve the light settings
+                    LightSetting selectedLight = jsonLoader.GetLightSettingByName(lightBehavior.lightDataName);
                     lightInfoPanel.gameObject.SetActive(true);
                     plantInfoPanel.gameObject.SetActive(false);
                     fishInfoPanel.gameObject.SetActive(false);
                     filterInfoPanel.gameObject.SetActive(false);
-                    // lightInfoPanel.UpdateLightInfo(selectedLight);
+                    lightInfoPanel.UpdateLightInfo(selectedLight);
                 }
+
                 else if (filterBehavior != null)
                 {
                     Debug.Log("Hit object is a filter: " + filterBehavior.filterName);
