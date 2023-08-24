@@ -25,27 +25,31 @@ public class FishWaterInteraction : MonoBehaviour
         }
         else
         {
-            lightSettings = jsonLoader.lightData.lights;
+            // Use the fully qualified name to access the LightSetting class inside JSONLoader
+            JSONLoader.LightSetting[] lightSettings = jsonLoader.lightData.lights;
+
+            // Load the fish data from JSONLoader
+            jsonLoader.LoadFishData();
         }
     }
 
     private void Update()
     {
-        if (fishBehavior == null)
+        if (fishBehavior == null || jsonLoader.fishData == null || jsonLoader.fishData.fishes == null)
         {
-            Debug.LogError("FishBehavior not found.");
+            Debug.LogError("FishBehavior or fish data is invalid.");
             return;
         }
 
-        FishData fishData = fishBehavior.fishData;
+        Fish[] fishes = jsonLoader.fishData.fishes;
 
-        if (fishData == null || fishData.fishes == null || fishData.fishes.Length == 0)
+        if (fishes.Length == 0)
         {
-            Debug.LogError("Fish data or fishes array is invalid.");
+            Debug.LogError("Fish data or fishes array is empty.");
             return;
         }
 
-        Fish fish = fishData.fishes[0];
+        Fish fish = fishes[0];
 
         if (fish.health <= 0 || fish.stress >= 100) return;
 
@@ -60,9 +64,7 @@ public class FishWaterInteraction : MonoBehaviour
             float currentTemperature = jsonLoader.GetCurrentTemperature();
             float lightIntensityFactor = CalculateLightIntensityFactor();
 
-            Fish currentFish = fishData.fishes[0]; // Renamed the variable here
-
-            fishBehavior.ApplyWaterEffects(fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, co2AbsorptionRate, currentTemperature);
+            fishBehavior.ApplyWaterEffects(fishBehavior.fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, co2AbsorptionRate, currentTemperature);
 
             foreach (Fish fishInstance in waterQualityManager.FishInstances)
             {
@@ -71,11 +73,11 @@ public class FishWaterInteraction : MonoBehaviour
 
             if (fishInfoPanel != null)
             {
-                fishInfoPanel.UpdateFishInfo(currentFish); // Used the renamed variable here
+                fishInfoPanel.UpdateFishInfo(fish);
             }
         }
-
     }
+
 
     private float CalculateLightIntensityFactor()
     {

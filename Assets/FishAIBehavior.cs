@@ -1,132 +1,188 @@
 using UnityEngine;
-using UnityEngine.AI;
+using System.Collections.Generic;
 
 public class FishAIBehavior : MonoBehaviour
 {
     public Transform[] hidingSpots;
     public GameObject foodSource;
 
-    public float speed = 5.0f;
-    public float rotationSpeed = 4.0f;
-    public float detectionRadius = 5.0f;
-    public bool isPredator = false;
-
-    public float hungerTimer = 30.0f;
-    public float desiredMinDepth = 0f;
-    public float desiredMaxDepth = 10f;
-
-    private bool isHungry = false;
+    private bool isPredator = false;
+    private float hungerTimer = 30.0f;
     private float currentHungerTimer;
-    private NavMeshAgent navAgent;
+    private float detectionRadius = 5.0f;
+
+    private BehaviorTreeNode rootBehavior;
 
     private void Start()
     {
-        navAgent = GetComponent<NavMeshAgent>();
-        navAgent.speed = speed;
-        navAgent.angularSpeed = rotationSpeed * 100;
+        currentHungerTimer = hungerTimer;
 
-        if (navAgent.isOnNavMesh)
-        {
-            Wander();
-            currentHungerTimer = hungerTimer;
-        }
+        rootBehavior = new SelectorNode(
+            new SequenceNode(
+                new ConditionNode(IsHungry),
+                new ActionNode(SeekFood)
+            ),
+            new SequenceNode(
+                new ConditionNode(IsThreatened),
+                new SelectorNode(
+                    new SequenceNode(
+                        new ConditionNode(IsPredator),
+                        new ActionNode(Flee)
+                    ),
+                    new SequenceNode(
+                        new ConditionNode(IsPrey),
+                        new ActionNode(Chase)
+                    )
+                )
+            ),
+            new ActionNode(Wander)
+        );
     }
 
     private void Update()
     {
-        if (navAgent.isOnNavMesh && navAgent.remainingDistance < 0.5f)
-        {
-            Wander();
-        }
+        rootBehavior.Execute();
+    }
 
-        HandleHunger();
+    private bool IsHungry()
+    {
+        return currentHungerTimer <= 0.0f;
+    }
 
+    private bool IsThreatened()
+    {
         Collider[] nearbyObjects = Physics.OverlapSphere(transform.position, detectionRadius);
         foreach (var obj in nearbyObjects)
         {
             FishAIBehavior otherFish = obj.GetComponent<FishAIBehavior>();
-            if (otherFish)
+            if (otherFish && otherFish.isPredator != isPredator)
             {
-                if (isPredator && !otherFish.isPredator)
-                {
-                    Chase(obj.transform.position);
-                }
-                else if (!isPredator && otherFish.isPredator)
-                {
-                    FleeFrom(obj.transform.position);
-                }
+                return true;
             }
         }
-
-        // Constrain fish to a certain depth
-        Vector3 position = transform.position;
-        position.y = Mathf.Clamp(position.y, desiredMinDepth, desiredMaxDepth);
-        transform.position = position;
+        return false;
     }
 
-    void Wander()
+    private bool IsPredator()
     {
-        if (!navAgent.isOnNavMesh)
+        return isPredator;
+    }
+
+    private bool IsPrey()
+    {
+        return !isPredator;
+    }
+
+    private void SeekFood()
+    {
+        if (foodSource != null)
         {
-            return;
+            Vector3 foodDirection = (foodSource.transform.position - transform.position).normalized;
+            transform.Translate(foodDirection * Time.deltaTime);
         }
+    }
+
+    private void Flee()
+    {
+        FishAIBehavior nearestPredator = FindNearestPredator();
+
+        if (nearestPredator != null)
+        {
+            Vector3 fleeDirection = transform.position - nearestPredator.transform.position;
+            fleeDirection.Normalize();
+
+            // Implement your own flee speed value here
+            float fleeSpeed = 5.0f; // Adjust this value as needed
+
+            transform.Translate(fleeDirection * fleeSpeed * Time.deltaTime);
+        }
+    }
+
+    private void Chase()
+    {
+        FishAIBehavior targetFish = FindTargetFish();
+
+        if (targetFish != null)
+        {
+            Vector3 chaseDirection = targetFish.transform.position - transform.position;
+            chaseDirection.Normalize();
+
+            // Implement your own chase speed value here
+            float chaseSpeed = 3.0f; // Adjust this value as needed
+
+            transform.Translate(chaseDirection * chaseSpeed * Time.deltaTime);
+        }
+    }
+
+    private void Wander()
+    {
+        // Implement your own wander behavior here
+        // For example, move in a random direction within a certain radius
 
         Vector3 randomDirection = Random.insideUnitSphere * detectionRadius;
         randomDirection += transform.position;
-        NavMeshHit hit;
-        if (NavMesh.SamplePosition(randomDirection, out hit, detectionRadius, 1))
-        {
-            Vector3 finalPosition = hit.position;
-            navAgent.SetDestination(finalPosition);
-        }
+
+        // Implement your own wander speed value here
+        float wanderSpeed = 1.0f; // Adjust this value as needed
+
+        // Ensure the fish stays within bounds of the tank or environment
+        // Make sure to handle the case when NavMesh is not used
+
+        // For example:
+        transform.Translate((randomDirection - transform.position).normalized * wanderSpeed * Time.deltaTime);
     }
 
-    void Chase(Vector3 target)
-    {
-        if (navAgent.isOnNavMesh)
-        {
-            navAgent.SetDestination(target);
-        }
-    }
 
-    void FleeFrom(Vector3 dangerSource)
+    private FishAIBehavior FindNearestPredator()
     {
-        if (!navAgent.isOnNavMesh)
-        {
-            return;
-        }
+        FishAIBehavior nearestPredator = null;
+        float nearestDistance = float.MaxValue;
 
-        Vector3 fleeDirection = (transform.position - dangerSource).normalized * detectionRadius;
-        navAgent.SetDestination(transform.position + fleeDirection);
-    }
+        Collider[] nearbyObjects = Physics.OverlapSphere(transform.position, detectionRadius);
 
-    void HandleHunger()
-    {
-        if (isHungry)
+        foreach (var obj in nearbyObjects)
         {
-            SeekFood();
-        }
-        else
-        {
-            currentHungerTimer -= Time.deltaTime;
-            if (currentHungerTimer <= 0)
+            FishAIBehavior otherFish = obj.GetComponent<FishAIBehavior>();
+
+            if (otherFish != null && otherFish.isPredator)
             {
-                isHungry = true;
+                float distance = Vector3.Distance(transform.position, otherFish.transform.position);
+
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestPredator = otherFish;
+                }
             }
         }
+
+        return nearestPredator;
     }
 
-    void SeekFood()
+    private FishAIBehavior FindTargetFish()
     {
-        if (foodSource && navAgent.isOnNavMesh)
+        FishAIBehavior targetFish = null;
+        float nearestDistance = float.MaxValue;
+
+        Collider[] nearbyObjects = Physics.OverlapSphere(transform.position, detectionRadius);
+
+        foreach (var obj in nearbyObjects)
         {
-            navAgent.SetDestination(foodSource.transform.position);
+            FishAIBehavior otherFish = obj.GetComponent<FishAIBehavior>();
+
+            if (otherFish != null && !otherFish.isPredator && otherFish != this)
+            {
+                float distance = Vector3.Distance(transform.position, otherFish.transform.position);
+
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    targetFish = otherFish;
+                }
+            }
         }
+
+        return targetFish;
     }
 
-    public void Eat()
-    {
-        isHungry = false;
-        currentHungerTimer = hungerTimer;
-    }
 }

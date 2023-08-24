@@ -2,10 +2,18 @@ using UnityEngine;
 
 public class PlantWaterInteraction : MonoBehaviour
 {
-    public WaterQualityManager waterQualityManager;
+    private JSONLoader jsonLoader;
     public PlantBehavior plantBehavior;
-    public JSONLoader jsonLoader;
     public PlantInfoPanel plantInfoPanel;
+
+    private void Start()
+    {
+        jsonLoader = GetComponent<JSONLoader>();
+        if (jsonLoader == null)
+        {
+            Debug.LogError("JSONLoader component not found.");
+        }
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -21,16 +29,8 @@ public class PlantWaterInteraction : MonoBehaviour
                 return;
 
             float lightIntensityFactor = CalculateLightIntensityFactor();
-            float currentTemperature = jsonLoader.GetCurrentTemperature();
 
-            if (waterQualityManager != null)
-            {
-                waterQualityManager.ApplyPlantEffect(plantBehavior.plantData, lightIntensityFactor, currentTemperature);
-            }
-            else
-            {
-                Debug.LogError("WaterQualityManager not found.");
-            }
+            // Apply water effects or interactions here using plantBehavior and lightIntensityFactor
 
             if (plantInfoPanel != null)
                 plantInfoPanel.UpdatePlantInfo(plantBehavior.plantData);
@@ -41,21 +41,15 @@ public class PlantWaterInteraction : MonoBehaviour
     {
         float totalIntensityFactor = 0f;
 
-        if (waterQualityManager != null)
+        if (jsonLoader != null)
         {
-            if (plantBehavior == null)
-            {
-                Debug.LogError("PlantBehavior not found.");
-                return 0f;
-            }
-
-            LightData lightData = waterQualityManager.GetLightData();
+            JSONLoader.LightData lightData = jsonLoader.LoadLightData();
 
             if (lightData != null && lightData.lights != null)
             {
-                LightSetting[] lightSettings = lightData.lights;
+                JSONLoader.LightSetting[] lightSettings = lightData.lights;
 
-                foreach (LightSetting settings in lightSettings)
+                foreach (JSONLoader.LightSetting settings in lightSettings)
                 {
                     totalIntensityFactor += settings.intensity_adjustment_factor;
                 }
@@ -67,10 +61,11 @@ public class PlantWaterInteraction : MonoBehaviour
         }
         else
         {
-            Debug.LogError("WaterQualityManager not found.");
+            Debug.LogError("JSONLoader not found.");
             return 0f;
         }
 
         return totalIntensityFactor;
     }
+
 }

@@ -61,6 +61,7 @@ public class FishInfoPanel : MonoBehaviour
         SetActive(true);
     }
 
+
     public void SetActive(bool active)
     {
         isActive = active;

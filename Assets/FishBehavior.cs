@@ -3,18 +3,17 @@ using UnityEngine;
 public class FishBehavior : MonoBehaviour
 {
     public Fish fish;
-    public WaterQualityManager waterQualityManager;
-    public GameObject deadCreatureIndicator;
     public WaterQualityParameters waterQualityParameters;
+    public GameObject deadCreatureIndicator;
+    public ResourcePool resourcePool;
+    public FishData fishData;
+    public FishInfoPanel fishInfoPanel;
 
     public float health = 100.0f;
     public float nutritionValue = 50.0f;
 
     private bool isCollidingWithWater = false;
     private JSONLoader jsonLoader;
-    private FishBehavior predator;
-    public ResourcePool resourcePool;
-    public FishData fishData;
 
     private void Start()
     {
@@ -25,14 +24,9 @@ public class FishBehavior : MonoBehaviour
             return;
         }
 
-        if (fish.predatorFoodAmount > 0)
+        if (fish.isHerbivorous || fish.predatorFoodAmount > 0)
         {
-            Debug.Log(fish.name + " is a predator.");
-            predator = this;
-        }
-        else if (fish.herbivoreFoodAmount > 0)
-        {
-            Debug.Log(fish.name + " is potential prey.");
+            fishInfoPanel = FindObjectOfType<FishInfoPanel>();
         }
     }
 
@@ -40,27 +34,11 @@ public class FishBehavior : MonoBehaviour
     {
         if (isCollidingWithWater)
         {
-            float pHValue = waterQualityParameters.GetpH();
-            float ammoniaValue = waterQualityParameters.GetAmmoniaLevel();
-            float nitriteValue = waterQualityParameters.GetNitriteLevel();
-            float nitrateValue = waterQualityParameters.GetNitrateLevel();
-            float o2ProductionRate = waterQualityParameters.GetOxygenProduction();
-            float co2AbsorptionRate = waterQualityParameters.GetCO2AbsorptionRate();
-            float currentTemperature = jsonLoader.GetCurrentTemperature();
-
-            ApplyWaterEffects(fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, co2AbsorptionRate, currentTemperature);
+            ApplyWaterEffects();
 
             if (health <= 0)
             {
                 Die();
-            }
-
-            if (fish.predatorFoodAmount > 0 && predator != null)
-            {
-                if (predator.gameObject.activeSelf)
-                {
-                    PredatorPreyInteraction();
-                }
             }
         }
 
@@ -69,8 +47,11 @@ public class FishBehavior : MonoBehaviour
 
     public void ApplyWaterEffects(FishData fishData, float pHValue, float ammoniaValue, float nitriteValue, float nitrateValue, float o2ProductionRate, float co2AbsorptionRate, float currentTemperature)
     {
-        health -= waterQualityParameters.GetAmmoniaLevel() * 0.1f;
-        health -= waterQualityParameters.GetNitrateLevel() * 0.05f;
+        float ammoniaEffect = ammoniaValue * 0.1f;
+        float nitrateEffect = nitrateValue * 0.05f;
+
+        health -= ammoniaEffect;
+        health -= nitrateEffect;
 
         if (fish.isHerbivorous)
         {
@@ -78,15 +59,6 @@ public class FishBehavior : MonoBehaviour
         }
     }
 
-    private void PredatorPreyInteraction()
-    {
-        if (fish.herbivoreFoodAmount > 0)
-        {
-            float predationAmount = 10.0f;
-            predator.health += predationAmount;
-            health -= predationAmount;
-        }
-    }
 
     private void ApplyBacterialEffects()
     {
@@ -134,5 +106,15 @@ public class FishBehavior : MonoBehaviour
             isCollidingWithWater = false;
             Debug.Log("Creature removed from water: " + fish.name);
         }
+    }
+
+    public void PredatorPreyInteraction(PredatorBehavior predator)
+    {
+        // Handle interactions with predators
+    }
+
+    public void Predation(PreyBehavior prey)
+    {
+        // Handle predation on prey
     }
 }

@@ -22808,7 +22808,6 @@ GameObject:
   - component: {fileID: 529122850}
   - component: {fileID: 529122849}
   - component: {fileID: 529122848}
-  - component: {fileID: 529122854}
   m_Layer: 0
   m_Name: Fish 1 (1)
   m_TagString: Fish
@@ -22955,28 +22954,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 39
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!195 &529122854
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 529122847}
-  m_Enabled: 1
-  m_AgentTypeID: -1372625422
-  m_Radius: 0.59
-  m_Speed: 3.5
-  m_Acceleration: 8
-  avoidancePriority: 50
-  m_AngularSpeed: 120
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 1.9999999
-  m_BaseOffset: -0.92
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
 --- !u!1 &529170576
 GameObject:
   m_ObjectHideFlags: 0
@@ -28670,7 +28647,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 685666506}
-  m_LocalRotation: {x: -0.04553855, y: 0.114285275, z: 0.005244295, w: 0.99238986}
+  m_LocalRotation: {x: -0.04553855, y: 0.114285305, z: 0.005244297, w: 0.99238986}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -29705,7 +29682,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 708221335}
-  m_LocalRotation: {x: -0.009459966, y: 0.11440039, z: 0.0010894256, w: 0.9933891}
+  m_LocalRotation: {x: -0.009459997, y: 0.114400335, z: 0.0010894287, w: 0.9933891}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -39737,9 +39714,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08c78b37ccab7cd408486047e890f984, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waterQualityManager: {fileID: 133430780}
   plantBehavior: {fileID: 0}
-  jsonLoader: {fileID: 0}
   plantInfoPanel: {fileID: 0}
 --- !u!114 &945429387
 MonoBehaviour:
@@ -56960,8 +56935,6 @@ MonoBehaviour:
     filters: []
   fishData:
     fishes: []
-  lightData:
-    lights: []
   algaeData:
     algae: []
   bacteriaData:
@@ -62847,9 +62820,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08c78b37ccab7cd408486047e890f984, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waterQualityManager: {fileID: 133430780}
   plantBehavior: {fileID: 1519242564}
-  jsonLoader: {fileID: 1364189694}
   plantInfoPanel: {fileID: 287038720}
 --- !u!114 &1519242564
 MonoBehaviour:
@@ -76689,9 +76660,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08c78b37ccab7cd408486047e890f984, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waterQualityManager: {fileID: 133430780}
   plantBehavior: {fileID: 1832542584}
-  jsonLoader: {fileID: 1364189694}
   plantInfoPanel: {fileID: 287038720}
 --- !u!114 &1832542584
 MonoBehaviour:
@@ -90677,7 +90646,6 @@ GameObject:
   - component: {fileID: 2143757610}
   - component: {fileID: 2143757609}
   - component: {fileID: 2143757614}
-  - component: {fileID: 2143757615}
   m_Layer: 0
   m_Name: Fish 1
   m_TagString: Fish
@@ -90824,28 +90792,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!195 &2143757615
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2143757608}
-  m_Enabled: 1
-  m_AgentTypeID: -1372625422
-  m_Radius: 0.62
-  m_Speed: 2
-  m_Acceleration: 8
-  avoidancePriority: 50
-  m_AngularSpeed: 120
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 1.9999999
-  m_BaseOffset: -0.92
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
 --- !u!1 &2146204281
 GameObject:
   m_ObjectHideFlags: 0
@@ -92322,7 +92268,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2650234582403667058}
-  m_LocalRotation: {x: -0.045538556, y: 0.11428528, z: 0.005244296, w: 0.9923899}
+  m_LocalRotation: {x: -0.045538556, y: 0.114285335, z: 0.0052442993, w: 0.9923898}
   m_LocalPosition: {x: 61.206326, y: 2.884, z: -2.6755137}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -95306,7 +95252,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fish:
-    name: 
+    name: Siamese Algae Eater
     type: 
     pH_tolerance: []
     ammonia_tolerance_ppm: []
@@ -95349,6 +95295,7 @@ MonoBehaviour:
   resourcePool: {fileID: 539868317}
   fishData:
     fishes: []
+  fishInfoPanel: {fileID: 0}
 --- !u!114 &7797620240468265858
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -68,13 +68,28 @@ public class InfoSelector : MonoBehaviour
                 else if (lightBehavior != null)
                 {
                     Debug.Log("Hit object is a light.");
-                    LightSetting selectedLight = jsonLoader.GetLightSettingByName(lightBehavior.lightDataName);
+                    JSONLoader.LightSetting selectedLightJSON = jsonLoader.GetLightSettingByName(lightBehavior.lightDataName);
+
+                    LightSetting selectedLight = new LightSetting();
+                    selectedLight.name = selectedLightJSON.name;
+                    selectedLight.type = selectedLightJSON.type;
+                    selectedLight.light_intensity_lux = selectedLightJSON.light_intensity_lux;
+                    selectedLight.color_temperature_kelvin = selectedLightJSON.color_temperature_kelvin;
+                    selectedLight.intensity_adjustment_factor = selectedLightJSON.intensity_adjustment_factor;
+                    selectedLight.price_usd = selectedLightJSON.price_usd;
+                    selectedLight.description = selectedLightJSON.description;
+                    selectedLight.isOn = selectedLightJSON.isOn;
+                    selectedLight.color = selectedLightJSON.color;
+                    selectedLight.intensity = selectedLightJSON.intensity;
+
                     lightInfoPanel.gameObject.SetActive(true);
                     plantInfoPanel.gameObject.SetActive(false);
                     fishInfoPanel.gameObject.SetActive(false);
                     filterInfoPanel.gameObject.SetActive(false);
                     lightInfoPanel.UpdateLightInfo(selectedLight);
                 }
+
+
 
                 else if (filterBehavior != null)
                 {

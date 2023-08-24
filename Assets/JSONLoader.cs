@@ -33,6 +33,7 @@ public class JSONLoader : MonoBehaviour
     public Dictionary<string, Fish> spawnedFishStats = new Dictionary<string, Fish>();
     public Dictionary<string, Plant> spawnedPlantStats = new Dictionary<string, Plant>();
 
+
     public Fish GetSpawnedFishStats(string uniqueName)
     {
         if (spawnedFishStats.ContainsKey(uniqueName))
@@ -205,43 +206,20 @@ public class JSONLoader : MonoBehaviour
         }
     }
 
-    public void LoadLightData()
+    public LightData LoadLightData()
     {
-        Debug.Log("Loading light data...");
         string lightFilePath = Path.Combine(Application.streamingAssetsPath, lightFileName);
         if (File.Exists(lightFilePath))
         {
             try
             {
                 string jsonData = File.ReadAllText(lightFilePath);
-                lightData = JsonUtility.FromJson<LightData>(jsonData);
-
-                if (lightData != null && lightData.lights != null && lightData.lights.Length > 0)
-                {
-                    Debug.Log("Loaded " + lightData.lights.Length + " lights from JSON.");
-                    foreach (LightSetting lightSetting in lightData.lights)
-                    {
-                        Debug.Log("Loaded light setting: " + lightSetting.name);
-                    }
-
-                    if (lightDataPanel != null)
-                    {
-                        lightDataPanel.UpdateLightData(lightData.lights);
-                    }
-                    else
-                    {
-                        Debug.LogError("LightDataPanel is null in JSONLoader");
-                    }
-                }
-                else
-                {
-                    Debug.LogError("Light data is null or empty in JSONLoader");
-                }
+                LightData lightData = JsonUtility.FromJson<LightData>(jsonData);
+                return lightData;
             }
             catch (Exception e)
             {
                 Debug.LogError("Error parsing light JSON: " + e.Message);
-                Debug.LogError("StackTrace: " + e.StackTrace);
             }
         }
         else
@@ -249,8 +227,7 @@ public class JSONLoader : MonoBehaviour
             Debug.LogError("Light file not found: " + lightFilePath);
         }
 
-        Debug.Log("LoadLightData finished.");
-        Debug.Log("First light name: " + (lightData.lights.Length > 0 ? lightData.lights[0].name : "No lights"));
+        return null;
     }
 
     public void LoadFishData()
@@ -434,6 +411,20 @@ public class JSONLoader : MonoBehaviour
     public class LightData
     {
         public LightSetting[] lights;
+    }
+
+    public class LightSetting
+    {
+        public string name;
+        public string type;
+        public float light_intensity_lux;
+        public float color_temperature_kelvin;
+        public float intensity_adjustment_factor;
+        public float price_usd;
+        public string description;
+        public bool isOn;
+        public Color color; // Custom color property
+        public float intensity; // Custom intensity property
     }
 
     [Serializable]

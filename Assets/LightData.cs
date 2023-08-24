@@ -19,6 +19,4 @@ public class LightSetting
     public bool isOn;
     public Color color; // Custom color property
     public float intensity; // Custom intensity property
-
-    // Add more custom properties as needed
 }

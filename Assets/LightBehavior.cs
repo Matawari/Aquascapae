@@ -71,16 +71,19 @@ public class LightBehavior : MonoBehaviour
         JSONLoader jsonLoader = FindObjectOfType<JSONLoader>();
         if (jsonLoader != null)
         {
-            LightSetting lightSetting = jsonLoader.GetLightSettingByName("LED Full Spectrum");
+            JSONLoader.LightSetting lightSetting = jsonLoader.GetLightSettingByName("LED Full Spectrum");
             if (lightSetting != null)
             {
                 float baseIntensity = lightSetting.intensity;
+
+                // Assuming you have other variables needed for calculations
                 float lightIntensityFactor = waterQualityManager.CalculateLightIntensityFactor();
                 float intensityEffect = waterQualityManager.CalculateIntensityEffect();
 
-                float artificialLightIntensity = baseIntensity * lightIntensityFactor * intensityEffect;
+                // Perform your calculations using the baseIntensity
+                float calculatedValue = baseIntensity * lightIntensityFactor * intensityEffect;
 
-                return artificialLightIntensity;
+                return calculatedValue;
             }
             else
             {
