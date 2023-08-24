@@ -16,8 +16,12 @@ public class PredatorBehavior : MonoBehaviour
         PreyBehavior prey = collision.gameObject.GetComponent<PreyBehavior>();
         if (prey != null)
         {
-            // Perform predation
-            PredatorPreyInteraction(prey);
+            // Perform predation based on randomness
+            float randomValue = Random.value;
+            if (randomValue < 0.5f || currentHealth == maxHealth)
+            {
+                PredatorPreyInteraction(prey);
+            }
         }
     }
 

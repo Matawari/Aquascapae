@@ -32,4 +32,19 @@ public class PreyBehavior : MonoBehaviour
             fishBehavior.Predation(this);
         }
     }
+
+    public void TakeDamage(float damage)
+    {
+        currentHealth -= damage;
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        // Destroy the game object when health reaches 0
+        Destroy(gameObject);
+    }
 }

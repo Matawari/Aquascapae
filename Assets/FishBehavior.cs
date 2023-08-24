@@ -34,7 +34,15 @@ public class FishBehavior : MonoBehaviour
     {
         if (isCollidingWithWater)
         {
-            ApplyWaterEffects();
+            float pHValue = waterQualityParameters.GetpH();
+            float ammoniaValue = waterQualityParameters.GetAmmoniaLevel();
+            float nitriteValue = waterQualityParameters.GetNitriteLevel();
+            float nitrateValue = waterQualityParameters.GetNitrateLevel();
+            float o2ProductionRate = waterQualityParameters.GetOxygenProduction();
+            float co2AbsorptionRate = waterQualityParameters.GetCO2AbsorptionRate();
+            float currentTemperature = jsonLoader.GetCurrentTemperature();
+
+            ApplyWaterEffects(fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, co2AbsorptionRate, currentTemperature);
 
             if (health <= 0)
             {
