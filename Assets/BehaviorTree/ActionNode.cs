@@ -1,20 +1,19 @@
 using System;
 
 
-// ActionNode.cs
 public class ActionNode : BehaviorTreeNode
 {
-    private Action action;
+    private System.Action action;
 
-    public ActionNode(Action action)
+    public ActionNode(System.Action action)
     {
         this.action = action;
     }
 
-    public override bool Execute()
+    public bool Execute()
     {
-        action.Invoke();
-        return true;
+        action();
+        return true; // For simplicity, we assume actions always succeed.
     }
 
 }

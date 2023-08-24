@@ -14,11 +14,16 @@ public class FishAIBehavior : MonoBehaviour
     private float fleeSpeed = 5.0f;
     private float chaseSpeed = 3.0f;
     private float wanderSpeed = 1.0f;
-    private float rotationSpeed = 2.0f;
+    private float rotationSpeed = 1.0f; // Reduced from 2.0f
+
     private float avoidanceDistance = 2.0f;
     private float avoidanceForce = 2.0f;
     private float[] previousTurningSpeeds = new float[5];
     private int currentIndex = 0;
+
+    private Vector3 previousPosition;
+    private float positionCheckInterval = 1.0f;
+    private float lastPositionCheckTime = 0.0f;
 
     private Vector3 currentVelocity;
     private float acceleration = 2.0f;
@@ -36,13 +41,17 @@ public class FishAIBehavior : MonoBehaviour
 
     private void Start()
     {
+        EnsureInsideWaterBody();
         currentHungerTimer = hungerTimer;
         InitializeBehaviorTree();
     }
-
     private void InitializeBehaviorTree()
     {
         rootBehavior = new SelectorNode(
+            new SequenceNode(
+                new ConditionNode(IsObstacleAhead),
+                new ActionNode(AvoidObstacle)
+            ),
             new SequenceNode(
                 new ConditionNode(IsIdle),
                 new ActionNode(Idle)
@@ -58,19 +67,18 @@ public class FishAIBehavior : MonoBehaviour
             new SequenceNode(
                 new ConditionNode(IsThreatened),
                 new SelectorNode(
-                    new SequenceNode(
-                        new ConditionNode(IsPredator),
-                        new ActionNode(Flee)
-                    ),
-                    new SequenceNode(
-                        new ConditionNode(IsPrey),
-                        new ActionNode(Chase)
-                    )
+                    new ActionNode(() => {
+                        if (AmIPredator())
+                            Flee();
+                        else
+                            Chase();
+                    })
                 )
             ),
             new ActionNode(Wander)
         );
     }
+
 
     private void Update()
     {
@@ -79,44 +87,101 @@ public class FishAIBehavior : MonoBehaviour
         previousTurningSpeeds[currentIndex] = currentTurningSpeed;
         currentIndex = (currentIndex + 1) % previousTurningSpeeds.Length;
 
-        if (currentIdleTimer > 0)
-        {
-            currentIdleTimer -= Time.deltaTime;
-            PivotTurn();
-        }
-        else if (currentSurfaceTimer > 0)
-        {
-            currentSurfaceTimer -= Time.deltaTime;
-            Surface();
-        }
-        else if (IsObstacleAhead())
-        {
-            AvoidObstacle();
-        }
-        else if (IsThreatened())
-        {
-            if (IsPredator())
-            {
-                Flee();
-            }
-            else if (IsPrey())
-            {
-                Chase();
-            }
-        }
-        else if (IsHungry())
-        {
-            SeekFood();
-        }
-        else
-        {
-            Wander();
-        }
+        rootBehavior.Execute();
 
         float persistence = 0.5f;
         float theta = currentTurningSpeed * Time.deltaTime;
         Quaternion rotation = Quaternion.Euler(0f, theta, 0f);
+        transform.rotation *= rotation;
+
+
+        if (Time.time - lastPositionCheckTime > positionCheckInterval)
+        {
+            if (Vector3.Distance(previousPosition, transform.position) < 0.05f) // Fish hasn't moved much
+            {
+                ResetBehaviors();
+            }
+
+            previousPosition = transform.position;
+            lastPositionCheckTime = Time.time;
+        }
+
+        Debug.DrawLine(transform.position, transform.position + transform.forward * 5f, Color.blue);
+
+        if (IsNearBoundary())
+        {
+            TurnAwayFromBoundary();
+        }
+
     }
+
+    private void EnsureInsideWaterBody()
+    {
+        Bounds bounds = waterBodyCollider.bounds;
+        if (!bounds.Contains(transform.position))
+        {
+            Vector3 randomPosition = new Vector3(
+                Random.Range(bounds.min.x, bounds.max.x),
+                Random.Range(bounds.min.y, bounds.max.y),
+                Random.Range(bounds.min.z, bounds.max.z)
+            );
+            transform.position = randomPosition;
+        }
+    }
+
+    private bool IsNearBoundary()
+    {
+        Bounds bounds = waterBodyCollider.bounds;
+        float distanceToBoundary = Mathf.Min(
+            transform.position.x - bounds.min.x,
+            bounds.max.x - transform.position.x,
+            transform.position.y - bounds.min.y,
+            bounds.max.y - transform.position.y,
+            transform.position.z - bounds.min.z,
+            bounds.max.z - transform.position.z
+        );
+
+        return distanceToBoundary < 3.0f; // Change this value if needed
+    }
+
+    private void ResetBehaviors()
+    {
+        currentIdleTimer = 0;
+        currentSurfaceTimer = 0;
+    }
+
+    private bool IsIdleOrSurfacing()
+    {
+        if (currentIdleTimer > 0 || currentSurfaceTimer > 0)
+            return true;
+
+        if (Random.value < idleProbability)
+        {
+            currentIdleTimer = idleDuration;
+            return true;
+        }
+
+        if (Random.value < surfaceProbability)
+        {
+            currentSurfaceTimer = surfaceDuration;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void HandleIdleOrSurfacing()
+    {
+        if (currentIdleTimer > 0)
+        {
+            Idle();
+        }
+        else if (currentSurfaceTimer > 0)
+        {
+            Surface();
+        }
+    }
+
 
     private float RandomTurningSpeed()
     {
@@ -282,14 +347,22 @@ public class FishAIBehavior : MonoBehaviour
         return !isPredator;
     }
 
+    private bool AmIPredator()
+    {
+        return isPredator;
+    }
+
     private void SeekFood()
     {
         if (foodSource != null)
         {
             Vector3 foodDirection = (foodSource.transform.position - transform.position).normalized;
-            transform.Translate(foodDirection * Time.deltaTime);
+            AdjustDirection(foodDirection);
+            ApplyAcceleration(foodDirection, chaseSpeed);
+            ApplyVelocity();
         }
     }
+
 
     private void ApplyAcceleration(Vector3 targetDirection, float speed)
     {
@@ -316,8 +389,6 @@ public class FishAIBehavior : MonoBehaviour
             fleeDirection.Normalize();
             Vector3 adjustedDirection = AdjustForBounds(fleeDirection * fleeSpeed * Time.deltaTime);
             AdjustDirection(adjustedDirection);
-            transform.Translate(Vector3.forward * fleeSpeed * Time.deltaTime);
-
             ApplyAcceleration(adjustedDirection, fleeSpeed);
             ApplyVelocity();
         }
@@ -333,8 +404,6 @@ public class FishAIBehavior : MonoBehaviour
             chaseDirection.Normalize();
             Vector3 adjustedDirection = AdjustForBounds(chaseDirection * chaseSpeed * Time.deltaTime);
             AdjustDirection(adjustedDirection);
-            transform.Translate(Vector3.forward * chaseSpeed * Time.deltaTime);
-
             ApplyAcceleration(adjustedDirection, chaseSpeed);
             ApplyVelocity();
         }
@@ -359,19 +428,43 @@ public class FishAIBehavior : MonoBehaviour
         transform.rotation = Quaternion.LookRotation(rotatedForward);
     }
 
+    private void TurnAwayFromBoundary()
+    {
+        Bounds bounds = waterBodyCollider.bounds;
+
+        Vector3 boundaryDirection = transform.position - bounds.center;
+        Vector3 desiredDirection = Vector3.Cross(boundaryDirection, Vector3.up).normalized; // Turn fish to swim parallel to the boundary
+        Quaternion desiredRotation = Quaternion.LookRotation(desiredDirection);
+        transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationSpeed * Time.deltaTime);
+
+        AvoidObstacle();  // Use the same obstacle avoidance behavior for boundaries
+    }
+
+
     private Vector3 AdjustForBounds(Vector3 intendedDirection)
     {
         Bounds bounds = waterBodyCollider.bounds;
         Vector3 nextPosition = transform.position + intendedDirection;
 
+        if (!bounds.Contains(transform.position))
+        {
+            transform.position = bounds.ClosestPoint(transform.position);
+        }
+
         if (!bounds.Contains(nextPosition))
         {
-            Vector3 toCenter = (bounds.center - transform.position).normalized;
-            intendedDirection = Vector3.Lerp(intendedDirection, toCenter, 0.7f);
+            Vector3 toBoundary = nextPosition - transform.position;
+            Vector3 toCenter = bounds.center - transform.position;
+            if (Vector3.Dot(toBoundary, toCenter) < 0)
+            {
+                intendedDirection = Vector3.Lerp(intendedDirection, toCenter.normalized, 0.7f);
+            }
         }
 
         return intendedDirection;
     }
+
+
 
     private Vector3 CalculateAvoidanceDirection(Vector3 intendedPosition)
     {

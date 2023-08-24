@@ -4,16 +4,16 @@ using System;
 // ConditionNode.cs
 public class ConditionNode : BehaviorTreeNode
 {
-    private Func<bool> condition;
+    private System.Func<bool> condition;
 
-    public ConditionNode(Func<bool> condition)
+    public ConditionNode(System.Func<bool> condition)
     {
         this.condition = condition;
     }
 
-    public override bool Execute()
+    public bool Execute()
     {
-        return condition.Invoke();
+        return condition();
     }
 
 }

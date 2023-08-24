@@ -1,5 +1,5 @@
 // BehaviorTreeNode.cs
-public abstract class BehaviorTreeNode
+public interface BehaviorTreeNode
 {
-    public abstract bool Execute();
+    bool Execute();
 }

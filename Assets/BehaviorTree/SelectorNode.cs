@@ -2,22 +2,21 @@ using System.Collections.Generic;
 
 public class SelectorNode : BehaviorTreeNode
 {
-    private List<BehaviorTreeNode> children;
+    private BehaviorTreeNode[] children;
 
     public SelectorNode(params BehaviorTreeNode[] nodes)
     {
-        children = new List<BehaviorTreeNode>(nodes);
+        children = nodes;
     }
 
-    public override bool Execute()
+    public bool Execute()
     {
-        foreach (var child in children)
+        foreach (var node in children)
         {
-            if (child.Execute())
-            {
+            if (node.Execute())
                 return true;
-            }
         }
         return false;
     }
+
 }
