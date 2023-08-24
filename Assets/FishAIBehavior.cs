@@ -24,9 +24,6 @@ public class FishAIBehavior : MonoBehaviour
     private float acceleration = 2.0f;
     private float deceleration = 4.0f;
 
-    private float spiralAngle = 0f;
-    private const float goldenRatio = 1.61803398875f;
-
     private float idleProbability = 0.01f;
     private float idleDuration = 5.0f;
     private float currentIdleTimer = 0.0f;
@@ -40,6 +37,11 @@ public class FishAIBehavior : MonoBehaviour
     private void Start()
     {
         currentHungerTimer = hungerTimer;
+        InitializeBehaviorTree();
+    }
+
+    private void InitializeBehaviorTree()
+    {
         rootBehavior = new SelectorNode(
             new SequenceNode(
                 new ConditionNode(IsIdle),
@@ -85,18 +87,30 @@ public class FishAIBehavior : MonoBehaviour
         else if (currentSurfaceTimer > 0)
         {
             currentSurfaceTimer -= Time.deltaTime;
-            rootBehavior.Execute();
+            Surface();
+        }
+        else if (IsObstacleAhead())
+        {
+            AvoidObstacle();
+        }
+        else if (IsThreatened())
+        {
+            if (IsPredator())
+            {
+                Flee();
+            }
+            else if (IsPrey())
+            {
+                Chase();
+            }
+        }
+        else if (IsHungry())
+        {
+            SeekFood();
         }
         else
         {
-            if (IsObstacleAhead())
-            {
-                AvoidObstacle();
-            }
-            else
-            {
-                rootBehavior.Execute();
-            }
+            Wander();
         }
 
         float persistence = 0.5f;
@@ -106,17 +120,18 @@ public class FishAIBehavior : MonoBehaviour
 
     private float RandomTurningSpeed()
     {
-        return Random.Range(-1f, 1f) * wanderSpeed;
+        return Random.Range(-2f, 2f) * wanderSpeed;
     }
 
     private bool IsObstacleAhead()
     {
         Vector3 forward = transform.forward;
-        float rayLength = 2.0f;
+        float rayLength = 3.0f;
         RaycastHit hit;
 
         if (Physics.Raycast(transform.position, forward, out hit, rayLength))
         {
+            Debug.DrawRay(transform.position, forward * rayLength, Color.red);
             return true;
         }
 
@@ -136,7 +151,7 @@ public class FishAIBehavior : MonoBehaviour
 
         if (IsNearWall())
         {
-            float wallInfluence = 2.0f;
+            float wallInfluence = 3.0f;
             avoidDirection *= wallInfluence;
         }
 
@@ -146,7 +161,6 @@ public class FishAIBehavior : MonoBehaviour
     private void ApplyAvoidance(Vector3 avoidDirection)
     {
         float avoidSpeed = 1.0f;
-
         Vector3 adjustedDirection = AvoidanceRaycast(avoidDirection);
         ApplyAcceleration(adjustedDirection, avoidSpeed);
         ApplyVelocity();
@@ -195,29 +209,21 @@ public class FishAIBehavior : MonoBehaviour
 
     private void Idle()
     {
-        float idleSpeed = 0.1f; // Adjust speed as needed for slower movement
-        float sinkRaiseAmount = Random.Range(-0.05f, 0.05f); // Adjust range for slower movement
-        float headTiltAngle = sinkRaiseAmount * 15f; // Adjust angle for head tilt
+        float idleSpeed = 0.1f;
+        float sinkRaiseAmount = Random.Range(-0.05f, 0.05f);
+        float headTiltAngle = sinkRaiseAmount * 15f;
 
-        // Calculate the target position with slight sinking or raising
         Vector3 targetPosition = new Vector3(
             transform.position.x,
             transform.position.y + sinkRaiseAmount,
             transform.position.z
         );
 
-        // Calculate the target rotation with head tilt
         Quaternion targetRotation = Quaternion.Euler(headTiltAngle, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
 
-        // Move towards the target position with idle speed
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, idleSpeed * Time.deltaTime);
-
-        // Apply the target rotation with head tilt
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, idleSpeed * Time.deltaTime);
     }
-
-
-
 
     private bool IsSurfacing()
     {
@@ -235,19 +241,15 @@ public class FishAIBehavior : MonoBehaviour
 
     private void Surface()
     {
-        float surfaceSpeed = 1.0f; // Adjust speed as needed
-
-        // Calculate the direction towards the upper side of the box collider
+        float surfaceSpeed = 1.0f;
         Vector3 surfaceDirection = Vector3.up;
 
-        // Calculate the target position at the upper side of the box collider
         Vector3 targetPosition = new Vector3(
             transform.position.x,
             waterBodyCollider.bounds.max.y,
             transform.position.z
         );
 
-        // Move towards the target position
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, surfaceSpeed * Time.deltaTime);
     }
 
@@ -340,9 +342,8 @@ public class FishAIBehavior : MonoBehaviour
 
     private void Wander()
     {
-        // Incorporate characteristics of persistent turning walker model here
-        float persistence = 0.5f; // Adjust persistence parameter
-        float meanTurningRate = 0.0f; // Adjust mean turning rate
+        float persistence = 0.5f;
+        float meanTurningRate = 0.0f;
 
         float deltaTime = Time.deltaTime;
         float theta = Random.Range(-1f, 1f) * meanTurningRate * deltaTime;
@@ -351,46 +352,13 @@ public class FishAIBehavior : MonoBehaviour
         Vector3 forward = transform.forward;
         Vector3 rotatedForward = rotation * forward;
 
-        // Calculate new position based on rotated direction
         Vector3 newPosition = transform.position + rotatedForward * wanderSpeed * deltaTime;
-
-        // Apply avoidance logic to avoid obstacles or collisions
-        newPosition = AvoidObstacles(newPosition);
-
-        // Apply bounds checking to keep fish within the water body
         newPosition = AdjustForBounds(newPosition);
 
-        // Update position and rotation
         transform.position = newPosition;
         transform.rotation = Quaternion.LookRotation(rotatedForward);
-
-        // Apply acceleration and velocity
-        ApplyAcceleration(rotatedForward, wanderSpeed);
-        ApplyVelocity();
     }
 
-    private Vector3 AvoidObstacles(Vector3 intendedPosition)
-    {
-        Vector3 avoidDirection = CalculateAvoidanceDirection(intendedPosition);
-        RaycastHit hit;
-
-        // Cast a ray to check if there's an obstacle in the avoidDirection
-        if (Physics.Raycast(transform.position, avoidDirection, out hit, avoidanceDistance))
-        {
-            Vector3 newDirection = Vector3.Reflect(avoidDirection, hit.normal);
-            return intendedPosition + newDirection * avoidanceForce * Time.deltaTime;
-        }
-
-        return intendedPosition;
-    }
-
-    private Vector3 CalculateAvoidanceDirection(Vector3 intendedPosition)
-    {
-        // Calculate direction away from obstacles or collisions
-        Vector3 avoidDirection = intendedPosition - transform.position;
-        avoidDirection.Normalize();
-        return avoidDirection;
-    }
     private Vector3 AdjustForBounds(Vector3 intendedDirection)
     {
         Bounds bounds = waterBodyCollider.bounds;
@@ -399,10 +367,17 @@ public class FishAIBehavior : MonoBehaviour
         if (!bounds.Contains(nextPosition))
         {
             Vector3 toCenter = (bounds.center - transform.position).normalized;
-            intendedDirection = Vector3.Lerp(intendedDirection, toCenter, 0.5f);
+            intendedDirection = Vector3.Lerp(intendedDirection, toCenter, 0.7f);
         }
 
         return intendedDirection;
+    }
+
+    private Vector3 CalculateAvoidanceDirection(Vector3 intendedPosition)
+    {
+        Vector3 avoidDirection = intendedPosition - transform.position;
+        avoidDirection.Normalize();
+        return avoidDirection;
     }
 
     private void AdjustDirection(Vector3 newDirection)
