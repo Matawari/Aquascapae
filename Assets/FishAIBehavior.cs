@@ -11,40 +11,29 @@ public class FishAIBehavior : MonoBehaviour
     private float hungerTimer = 30.0f;
     private float currentHungerTimer;
     private float detectionRadius = 5.0f;
-    private float fleeSpeed = 5.0f;
+    private float fleeSpeed = 4.0f;
     private float chaseSpeed = 3.0f;
     private float wanderSpeed = 1.0f;
-    private float rotationSpeed = 1.0f; // Reduced from 2.0f
-
-    private float avoidanceDistance = 2.0f;
-    private float avoidanceForce = 2.0f;
-    private float[] previousTurningSpeeds = new float[5];
-    private int currentIndex = 0;
-
-    private Vector3 previousPosition;
-    private float positionCheckInterval = 1.0f;
-    private float lastPositionCheckTime = 0.0f;
-
+    private float rotationSpeed = 1.5f;
     private Vector3 currentVelocity;
     private float acceleration = 2.0f;
     private float deceleration = 4.0f;
-
     private float idleProbability = 0.01f;
     private float idleDuration = 5.0f;
     private float currentIdleTimer = 0.0f;
-
     private float surfaceProbability = 0.005f;
     private float surfaceDuration = 4.0f;
     private float currentSurfaceTimer = 0.0f;
-
     private BehaviorTreeNode rootBehavior;
+    private float timeNearBoundary = 0f;
+    private float idleTimer = 0.0f;
 
     private void Start()
     {
-        EnsureInsideWaterBody();
         currentHungerTimer = hungerTimer;
         InitializeBehaviorTree();
     }
+
     private void InitializeBehaviorTree()
     {
         rootBehavior = new SelectorNode(
@@ -79,114 +68,151 @@ public class FishAIBehavior : MonoBehaviour
         );
     }
 
-
     private void Update()
     {
-        float averagePreviousTurningSpeed = previousTurningSpeeds.Average();
-        float currentTurningSpeed = (averagePreviousTurningSpeed + RandomTurningSpeed()) / 2;
-        previousTurningSpeeds[currentIndex] = currentTurningSpeed;
-        currentIndex = (currentIndex + 1) % previousTurningSpeeds.Length;
-
-        rootBehavior.Execute();
-
-        float persistence = 0.5f;
-        float theta = currentTurningSpeed * Time.deltaTime;
-        Quaternion rotation = Quaternion.Euler(0f, theta, 0f);
-        transform.rotation *= rotation;
-
-
-        if (Time.time - lastPositionCheckTime > positionCheckInterval)
+        if (IsOutsideWaterBody())
         {
-            if (Vector3.Distance(previousPosition, transform.position) < 0.05f) // Fish hasn't moved much
-            {
-                ResetBehaviors();
-            }
-
-            previousPosition = transform.position;
-            lastPositionCheckTime = Time.time;
+            ReturnToWaterBody();
         }
-
-        Debug.DrawLine(transform.position, transform.position + transform.forward * 5f, Color.blue);
-
+        else
+        {
+            rootBehavior.Execute();
+            if (IsNearBoundary())
+            {
+                TurnAwayFromBoundary();
+            }
+        }
+        ApplyVelocity();
+        SteerInsideWaterBody();
+        StayWithinBounds();
+        currentVelocity += SinusoidalMovement(1.0f, 0.1f);
+        // Ensure no upward bias
+        transform.position = new Vector3(transform.position.x, Mathf.Clamp(transform.position.y, waterBodyCollider.bounds.min.y, waterBodyCollider.bounds.max.y), transform.position.z);
+        ReflectFromBoundary();
+        if (Random.value < 0.1f) // 10% chance to idle
+        {
+            Idle();
+        }
+        else
+        {
+            Wander();
+        }
         if (IsNearBoundary())
         {
             TurnAwayFromBoundary();
+            Idle();
+        }
+        else
+        {
+            if (idleTimer <= 0)
+            {
+                Wander(); // You can reintroduce the Wander behavior here for when they are not idling
+            }
+            else
+            {
+                Idle();
+            }
         }
 
+        ApplyVelocity();
     }
 
-    private void EnsureInsideWaterBody()
+    private void ReflectFromBoundary()
+    {
+        Bounds bounds = waterBodyCollider.bounds;
+
+        if (transform.position.x <= bounds.min.x || transform.position.x >= bounds.max.x)
+        {
+            currentVelocity.x = -currentVelocity.x;
+            transform.position = new Vector3(Mathf.Clamp(transform.position.x, bounds.min.x, bounds.max.x), transform.position.y, transform.position.z);
+        }
+
+        if (transform.position.y <= bounds.min.y || transform.position.y >= bounds.max.y)
+        {
+            currentVelocity.y = -currentVelocity.y;
+            transform.position = new Vector3(transform.position.x, Mathf.Clamp(transform.position.y, bounds.min.y, bounds.max.y), transform.position.z);
+        }
+
+        if (transform.position.z <= bounds.min.z || transform.position.z >= bounds.max.z)
+        {
+            currentVelocity.z = -currentVelocity.z;
+            transform.position = new Vector3(transform.position.x, transform.position.y, Mathf.Clamp(transform.position.z, bounds.min.z, bounds.max.z));
+        }
+    }
+
+
+
+    private Vector3 SinusoidalMovement(float frequency, float amplitude)
+    {
+        float sinWave = Mathf.Sin(Time.time * frequency) * amplitude;
+        return new Vector3(0, sinWave, 0);
+    }
+
+    private void StayWithinBounds()
+    {
+        Bounds bounds = waterBodyCollider.bounds;
+        Vector3 desiredDirection = transform.forward;
+
+        if (!bounds.Contains(transform.position))
+        {
+            Vector3 toCenter = (bounds.center - transform.position).normalized;
+            desiredDirection = toCenter;
+        }
+
+        AdjustDirection(desiredDirection);
+        ApplyAcceleration(desiredDirection, wanderSpeed);
+    }
+
+
+    private bool IsOutsideWaterBody()
+    {
+        return !waterBodyCollider.bounds.Contains(transform.position);
+    }
+
+    private void ReturnToWaterBody()
+    {
+        Vector3 toCenter = (waterBodyCollider.bounds.center - transform.position).normalized;
+        AdjustDirection(toCenter);
+        ApplyAcceleration(toCenter, 2 * wanderSpeed);
+    }
+
+    private void TurnAwayFromBoundary()
+    {
+        Bounds bounds = waterBodyCollider.bounds;
+
+        Vector3 toCenter = (bounds.center - transform.position).normalized;
+        Vector3 randomOffset = new Vector3(Random.Range(-0.5f, 0.5f), Random.Range(-0.5f, 0.5f), Random.Range(-0.5f, 0.5f));
+        Vector3 desiredDirection = (toCenter + randomOffset).normalized;
+
+        AdjustDirection(desiredDirection);
+    }
+
+
+
+
+    private void SteerInsideWaterBody()
     {
         Bounds bounds = waterBodyCollider.bounds;
         if (!bounds.Contains(transform.position))
         {
-            Vector3 randomPosition = new Vector3(
-                Random.Range(bounds.min.x, bounds.max.x),
-                Random.Range(bounds.min.y, bounds.max.y),
-                Random.Range(bounds.min.z, bounds.max.z)
-            );
-            transform.position = randomPosition;
+            Vector3 toCenter = (bounds.center - transform.position).normalized;
+            currentVelocity += toCenter * 3 * wanderSpeed; // Strong push towards center
+            ApplyAcceleration(toCenter, 3 * wanderSpeed);
         }
     }
+
+
 
     private bool IsNearBoundary()
     {
         Bounds bounds = waterBodyCollider.bounds;
-        float distanceToBoundary = Mathf.Min(
-            transform.position.x - bounds.min.x,
-            bounds.max.x - transform.position.x,
-            transform.position.y - bounds.min.y,
-            bounds.max.y - transform.position.y,
-            transform.position.z - bounds.min.z,
-            bounds.max.z - transform.position.z
-        );
+        float margin = 1.0f; // This value can be adjusted based on the size of your fish and water body
 
-        return distanceToBoundary < 3.0f; // Change this value if needed
+        return transform.position.x <= bounds.min.x + margin || transform.position.x >= bounds.max.x - margin ||
+               transform.position.y <= bounds.min.y + margin || transform.position.y >= bounds.max.y - margin ||
+               transform.position.z <= bounds.min.z + margin || transform.position.z >= bounds.max.z - margin;
     }
 
-    private void ResetBehaviors()
-    {
-        currentIdleTimer = 0;
-        currentSurfaceTimer = 0;
-    }
-
-    private bool IsIdleOrSurfacing()
-    {
-        if (currentIdleTimer > 0 || currentSurfaceTimer > 0)
-            return true;
-
-        if (Random.value < idleProbability)
-        {
-            currentIdleTimer = idleDuration;
-            return true;
-        }
-
-        if (Random.value < surfaceProbability)
-        {
-            currentSurfaceTimer = surfaceDuration;
-            return true;
-        }
-
-        return false;
-    }
-
-    private void HandleIdleOrSurfacing()
-    {
-        if (currentIdleTimer > 0)
-        {
-            Idle();
-        }
-        else if (currentSurfaceTimer > 0)
-        {
-            Surface();
-        }
-    }
-
-
-    private float RandomTurningSpeed()
-    {
-        return Random.Range(-2f, 2f) * wanderSpeed;
-    }
 
     private bool IsObstacleAhead()
     {
@@ -196,66 +222,21 @@ public class FishAIBehavior : MonoBehaviour
 
         if (Physics.Raycast(transform.position, forward, out hit, rayLength))
         {
-            Debug.DrawRay(transform.position, forward * rayLength, Color.red);
             return true;
         }
-
         return false;
-    }
-
-    private void PivotTurn()
-    {
-        float pivotSpeed = 30.0f;
-        transform.Rotate(Vector3.up, pivotSpeed * Time.deltaTime);
     }
 
     private void AvoidObstacle()
     {
-        Vector3 intendedPosition = transform.position + currentVelocity * Time.deltaTime;
-        Vector3 avoidDirection = CalculateAvoidanceDirection(intendedPosition);
-
-        if (IsNearWall())
-        {
-            float wallInfluence = 3.0f;
-            avoidDirection *= wallInfluence;
-        }
-
-        ApplyAvoidance(avoidDirection);
-    }
-
-    private void ApplyAvoidance(Vector3 avoidDirection)
-    {
-        float avoidSpeed = 1.0f;
-        Vector3 adjustedDirection = AvoidanceRaycast(avoidDirection);
-        ApplyAcceleration(adjustedDirection, avoidSpeed);
-        ApplyVelocity();
-    }
-
-    private bool IsNearWall()
-    {
-        Bounds bounds = waterBodyCollider.bounds;
-        float distanceToWall = Mathf.Min(
-            transform.position.x - bounds.min.x,
-            bounds.max.x - transform.position.x,
-            transform.position.y - bounds.min.y,
-            bounds.max.y - transform.position.y,
-            transform.position.z - bounds.min.z,
-            bounds.max.z - transform.position.z
-        );
-
-        return distanceToWall < 1.0f;
-    }
-
-    private Vector3 AvoidanceRaycast(Vector3 direction)
-    {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, direction, out hit))
+        if (Physics.Raycast(transform.position, transform.forward, out hit, 3.0f))
         {
-            Vector3 newDirection = Vector3.Reflect(direction, hit.normal);
-            return newDirection.normalized;
+            Vector3 avoidDirection = Vector3.Cross(hit.normal, Vector3.up);
+            AdjustDirection(avoidDirection);
+            ApplyAcceleration(avoidDirection, wanderSpeed);
+            ApplyVelocity();
         }
-
-        return direction;
     }
 
     private bool IsIdle()
@@ -274,20 +255,15 @@ public class FishAIBehavior : MonoBehaviour
 
     private void Idle()
     {
-        float idleSpeed = 0.1f;
-        float sinkRaiseAmount = Random.Range(-0.05f, 0.05f);
-        float headTiltAngle = sinkRaiseAmount * 15f;
-
-        Vector3 targetPosition = new Vector3(
-            transform.position.x,
-            transform.position.y + sinkRaiseAmount,
-            transform.position.z
-        );
-
-        Quaternion targetRotation = Quaternion.Euler(headTiltAngle, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
-
-        transform.position = Vector3.MoveTowards(transform.position, targetPosition, idleSpeed * Time.deltaTime);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, idleSpeed * Time.deltaTime);
+        if (idleTimer <= 0)
+        {
+            idleTimer = idleDuration;
+        }
+        else
+        {
+            idleTimer -= Time.deltaTime;
+            ApplyAcceleration(-currentVelocity, 0.5f * wanderSpeed); // Slowly decelerate
+        }
     }
 
     private bool IsSurfacing()
@@ -300,23 +276,27 @@ public class FishAIBehavior : MonoBehaviour
             currentSurfaceTimer = surfaceDuration;
             return true;
         }
-
         return false;
     }
 
     private void Surface()
     {
-        float surfaceSpeed = 1.0f;
+        float surfaceSpeed = 0.5f;
         Vector3 surfaceDirection = Vector3.up;
 
         Vector3 targetPosition = new Vector3(
             transform.position.x,
-            waterBodyCollider.bounds.max.y,
+            Mathf.Min(waterBodyCollider.bounds.max.y - 0.2f, transform.position.y + 0.1f),
             transform.position.z
         );
 
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, surfaceSpeed * Time.deltaTime);
+        if (transform.position.y >= waterBodyCollider.bounds.max.y - 0.2f)
+        {
+            currentSurfaceTimer = 0;  // Reset timer if fish is close to the surface
+        }
     }
+
 
     private bool IsHungry()
     {
@@ -337,16 +317,6 @@ public class FishAIBehavior : MonoBehaviour
         return false;
     }
 
-    private bool IsPredator()
-    {
-        return isPredator;
-    }
-
-    private bool IsPrey()
-    {
-        return !isPredator;
-    }
-
     private bool AmIPredator()
     {
         return isPredator;
@@ -363,21 +333,24 @@ public class FishAIBehavior : MonoBehaviour
         }
     }
 
-
     private void ApplyAcceleration(Vector3 targetDirection, float speed)
     {
+        targetDirection.y = 0;  // Zero out the vertical component
         currentVelocity = Vector3.MoveTowards(currentVelocity, targetDirection * speed, acceleration * Time.deltaTime);
     }
 
-    private void ApplyDeceleration()
-    {
-        currentVelocity = Vector3.MoveTowards(currentVelocity, Vector3.zero, deceleration * Time.deltaTime);
-    }
 
     private void ApplyVelocity()
     {
         transform.Translate(currentVelocity * Time.deltaTime, Space.World);
+        if (currentVelocity.magnitude > 0.1f) // Only adjust if there's significant movement
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(currentVelocity.normalized);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
     }
+
+
 
     private void Flee()
     {
@@ -387,9 +360,8 @@ public class FishAIBehavior : MonoBehaviour
         {
             Vector3 fleeDirection = transform.position - nearestPredator.transform.position;
             fleeDirection.Normalize();
-            Vector3 adjustedDirection = AdjustForBounds(fleeDirection * fleeSpeed * Time.deltaTime);
-            AdjustDirection(adjustedDirection);
-            ApplyAcceleration(adjustedDirection, fleeSpeed);
+            AdjustDirection(fleeDirection);
+            ApplyAcceleration(fleeDirection, fleeSpeed);
             ApplyVelocity();
         }
     }
@@ -402,82 +374,31 @@ public class FishAIBehavior : MonoBehaviour
         {
             Vector3 chaseDirection = targetFish.transform.position - transform.position;
             chaseDirection.Normalize();
-            Vector3 adjustedDirection = AdjustForBounds(chaseDirection * chaseSpeed * Time.deltaTime);
-            AdjustDirection(adjustedDirection);
-            ApplyAcceleration(adjustedDirection, chaseSpeed);
+            AdjustDirection(chaseDirection);
+            ApplyAcceleration(chaseDirection, chaseSpeed);
             ApplyVelocity();
         }
     }
 
     private void Wander()
     {
-        float persistence = 0.5f;
-        float meanTurningRate = 0.0f;
-
-        float deltaTime = Time.deltaTime;
-        float theta = Random.Range(-1f, 1f) * meanTurningRate * deltaTime;
-        Quaternion rotation = Quaternion.Euler(0f, theta, 0f);
-
-        Vector3 forward = transform.forward;
-        Vector3 rotatedForward = rotation * forward;
-
-        Vector3 newPosition = transform.position + rotatedForward * wanderSpeed * deltaTime;
-        newPosition = AdjustForBounds(newPosition);
-
-        transform.position = newPosition;
-        transform.rotation = Quaternion.LookRotation(rotatedForward);
-    }
-
-    private void TurnAwayFromBoundary()
-    {
-        Bounds bounds = waterBodyCollider.bounds;
-
-        Vector3 boundaryDirection = transform.position - bounds.center;
-        Vector3 desiredDirection = Vector3.Cross(boundaryDirection, Vector3.up).normalized; // Turn fish to swim parallel to the boundary
-        Quaternion desiredRotation = Quaternion.LookRotation(desiredDirection);
-        transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationSpeed * Time.deltaTime);
-
-        AvoidObstacle();  // Use the same obstacle avoidance behavior for boundaries
-    }
-
-
-    private Vector3 AdjustForBounds(Vector3 intendedDirection)
-    {
-        Bounds bounds = waterBodyCollider.bounds;
-        Vector3 nextPosition = transform.position + intendedDirection;
-
-        if (!bounds.Contains(transform.position))
+        if (Random.value < 0.05f) // 5% chance to change direction
         {
-            transform.position = bounds.ClosestPoint(transform.position);
+            Vector3 randomDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-0.2f, 0.2f), Random.Range(-1f, 1f)).normalized;  // Reduced vertical range
+            AdjustDirection(randomDirection);
+            ApplyAcceleration(randomDirection, wanderSpeed);
         }
-
-        if (!bounds.Contains(nextPosition))
-        {
-            Vector3 toBoundary = nextPosition - transform.position;
-            Vector3 toCenter = bounds.center - transform.position;
-            if (Vector3.Dot(toBoundary, toCenter) < 0)
-            {
-                intendedDirection = Vector3.Lerp(intendedDirection, toCenter.normalized, 0.7f);
-            }
-        }
-
-        return intendedDirection;
     }
 
 
-
-    private Vector3 CalculateAvoidanceDirection(Vector3 intendedPosition)
-    {
-        Vector3 avoidDirection = intendedPosition - transform.position;
-        avoidDirection.Normalize();
-        return avoidDirection;
-    }
 
     private void AdjustDirection(Vector3 newDirection)
     {
-        Quaternion targetRotation = Quaternion.LookRotation(newDirection);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        Vector3 blendedDirection = Vector3.Lerp(transform.forward, newDirection, 0.05f);
+        Quaternion targetRotation = Quaternion.LookRotation(blendedDirection);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.2f * rotationSpeed * Time.deltaTime);
     }
+
 
     private FishAIBehavior FindNearestPredator()
     {
