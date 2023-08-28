@@ -10,6 +10,10 @@ public class BagController : MonoBehaviour
     public float lerpSpeed = 5f; // Lerp speed for smoother movement and rotation
     public float elevationSpeed = 0.1f; // Elevation speed when scrolling the mouse
     public float maxElevationAboveInitial = 2f; // Maximum elevation above initial position
+    public ParticleSystem substrateEmitter;  // Assign the particle system in the Unity Editor
+    public SubstrateAccumulator substrateAccumulator;
+
+
 
     private Vector3 targetPosition;
     private Quaternion targetRotation;
@@ -52,5 +56,30 @@ public class BagController : MonoBehaviour
         // Smoothly move and rotate the bag towards target values
         transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * lerpSpeed);
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+
+        if (transform.rotation.eulerAngles.z > 20f && transform.rotation.eulerAngles.z < 90f)  // Ensure rotation is between 20 and 90 degrees
+        {
+            if (!substrateEmitter.isPlaying)
+            {
+                substrateEmitter.Play();
+            }
+        }
+        else
+        {
+            if (substrateEmitter.isPlaying)
+            {
+                substrateEmitter.Stop();
+            }
+        }
     }
+
+    private void OnParticleCollision(GameObject other)
+    {
+        if (other.CompareTag("Base"))  // Assuming your tank has a tag "Tank"
+        {
+            Vector3 collisionPoint = other.transform.position;  // For simplicity, we're using the tank's position. You could get more precise collision points if necessary.
+            substrateAccumulator.Accumulate(collisionPoint);
+        }
+    }
+
 }
