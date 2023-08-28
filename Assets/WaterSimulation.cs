@@ -2,63 +2,61 @@ using UnityEngine;
 
 public class WaterSimulation : MonoBehaviour
 {
-    public float waveAmplitude = 0.1f;
-    public float waveRadius = 1.0f;
-    public float waveDuration = 1.0f;
+    public int numParticles = 64;
+    public ComputeShader particleSimulationCS;
 
-    public Camera mainCamera; // Reference to the camera
+    private ComputeBuffer particleBuffer;
+    private int kernelIndex;
 
-    private Vector3[] baseVertices;
-    private MeshFilter meshFilter;
+    private struct Particle
+    {
+        public Vector3 position;
+        public Vector3 velocity;
+    }
 
     private void Start()
     {
-        meshFilter = GetComponent<MeshFilter>();
-        baseVertices = meshFilter.mesh.vertices;
+        InitializeParticles();
+        kernelIndex = particleSimulationCS.FindKernel("CSMain");
     }
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            Vector3 clickPosition = GetMouseClickPosition();
-            CreateCircularWave(clickPosition);
-        }
+        SimulateParticles();
+        RenderParticles();
     }
 
-    private Vector3 GetMouseClickPosition()
+    private void InitializeParticles()
     {
-        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition); // Use the specified camera
-        RaycastHit hit;
+        Particle[] particles = new Particle[numParticles];
 
-        if (Physics.Raycast(ray, out hit))
+        for (int i = 0; i < numParticles; i++)
         {
-            return hit.point;
+            particles[i].position = new Vector3(i, 0, 0);
+            particles[i].velocity = Vector3.zero;
         }
 
-        return Vector3.zero;
+        particleBuffer = new ComputeBuffer(numParticles, sizeof(float) * 6);
+        particleBuffer.SetData(particles);
+        particleSimulationCS.SetBuffer(kernelIndex, "particleBuffer", particleBuffer);
     }
 
-    private void CreateCircularWave(Vector3 center)
+    private void SimulateParticles()
     {
-        Mesh mesh = meshFilter.mesh;
-        Vector3[] vertices = new Vector3[baseVertices.Length];
+        particleSimulationCS.Dispatch(kernelIndex, numParticles / 64, 1, 1);
+    }
 
-        for (int i = 0; i < baseVertices.Length; i++)
-        {
-            Vector3 vertex = baseVertices[i];
-            float distanceToCenter = Vector3.Distance(vertex, center);
+    private void RenderParticles()
+    {
+        // Set particle positions to the shader
+        Shader.SetGlobalBuffer("particleBuffer", particleBuffer);
 
-            if (distanceToCenter <= waveRadius)
-            {
-                float waveHeight = waveAmplitude * Mathf.Sin(Mathf.PI * distanceToCenter / waveRadius);
-                vertex.y += waveHeight;
-            }
+        // Dispatch draw command for particles
+        Graphics.DrawProceduralNow(MeshTopology.Points, numParticles);
+    }
 
-            vertices[i] = vertex;
-        }
-
-        mesh.vertices = vertices;
-        mesh.RecalculateNormals();
+    private void OnDestroy()
+    {
+        particleBuffer.Release();
     }
 }

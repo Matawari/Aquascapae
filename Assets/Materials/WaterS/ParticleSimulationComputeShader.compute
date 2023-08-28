@@ -1,0 +1,26 @@
+// ParticleSimulationComputeShader.compute
+
+#pragma kernel CSMain
+
+// Struct for particle data
+struct Particle {
+    float3 position;
+    float3 velocity;
+};
+
+// Declare the RWStructuredBuffer that will hold particle data
+RWStructuredBuffer<Particle> particleBuffer;
+
+// Constants for simulation
+float timeStep = 0.01; // Time step for simulation
+
+[numthreads(64, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    Particle particle = particleBuffer[id.x];
+    // Perform particle simulation calculations here
+    // Update particle position and velocity based on forces, springs, and damping
+    particle.position += particle.velocity * timeStep;
+    // Update particle data back to buffer
+    particleBuffer[id.x] = particle;
+}
