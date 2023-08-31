@@ -13,23 +13,36 @@ public class ObjectPlacementController : MonoBehaviour
     public float scaleSpeed = 1f;
     public float minScale = 0.1f;
     public float maxScale = 10f;
-
     public GameObject shopPanel;
     public List<Button> plantButtons = new List<Button>();
     public Collider[] tankColliders;
+    public static ObjectPlacementController instance;
 
     private GameObject spawnedObject;
-    private bool isObjectSelected;
-    private bool isLocked;
-    private bool canInteract;
+    private bool isObjectSelected = false;
+    private bool isLocked = false;
+    private bool canInteract = false;
     private Renderer objectRenderer;
     private int selectedPrefabIndex = 0;
     private Material originalMaterial;
     private bool isObjectPlaced = false;
     private bool hasCollided = false;
 
-    private Dictionary<string, Fish> spawnedFishStats = new Dictionary<string, Fish>();
-    private Dictionary<string, Plant> spawnedPlantStats = new Dictionary<string, Plant>();
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+    public bool IsObjectBeingPlaced()
+    {
+        return isObjectSelected && canInteract && !isLocked;
+    }
 
     public int SelectedPrefabIndex
     {
@@ -40,6 +53,7 @@ public class ObjectPlacementController : MonoBehaviour
     private void Start()
     {
         objectRenderer = GetComponent<Renderer>();
+        originalMaterial = objectRenderer.material;
         foreach (Button plantButton in plantButtons)
         {
             plantButton.onClick.AddListener(OnPlantButtonClick);
@@ -50,102 +64,84 @@ public class ObjectPlacementController : MonoBehaviour
     {
         if (isObjectSelected && canInteract && !isLocked)
         {
-            if (spawnedObject != null)
-            {
-                Ray ray = placementCamera.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hitInfo;
+            HandleObjectPlacement();
+        }
 
-                if (Physics.Raycast(ray, out hitInfo, Mathf.Infinity, substrateLayer))
-                {
-                    Vector3 targetPosition = hitInfo.point;
-                    spawnedObject.transform.position = targetPosition;
-                }
-
-                float rotationY = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
-                spawnedObject.transform.Rotate(Vector3.up, rotationY);
-
-                float rotationX = Input.GetAxis("Vertical") * rotationSpeed * Time.deltaTime;
-                spawnedObject.transform.Rotate(Vector3.right, rotationX);
-
-                float scale = 0f;
-                if (Input.GetKey(KeyCode.Q))
-                    scale = -scaleSpeed * Time.deltaTime;
-                else if (Input.GetKey(KeyCode.E))
-                    scale = scaleSpeed * Time.deltaTime;
-
-                Vector3 newScale = spawnedObject.transform.localScale + new Vector3(scale, scale, scale);
-                newScale = Vector3.ClampMagnitude(newScale, maxScale);
-                newScale = Vector3.Max(newScale, new Vector3(minScale, minScale, minScale));
-                spawnedObject.transform.localScale = newScale;
-
-                if (Input.GetMouseButtonDown(0))
-                {
-                    if (!isLocked)
-                    {
-                        isLocked = true;
-                        Rigidbody rb = spawnedObject.GetComponent<Rigidbody>();
-                        if (rb != null)
-                        {
-                            rb.isKinematic = true;
-                        }
-                    }
-                    canInteract = false;
-                    isObjectPlaced = true;
-                    if (objectRenderer != null)
-                    {
-                        objectRenderer.material = originalMaterial;
-                    }
-
-                    if (hasCollidedWithTank())
-                    {
-                        canInteract = false;
-                    }
-                    string uniqueName = "Item_" + System.Guid.NewGuid().ToString();
-                    if (selectedPrefabIndex >= 0 && selectedPrefabIndex < objectPrefabs.Length)
-                    {
-                        GameObject prefab = objectPrefabs[selectedPrefabIndex];
-                        Fish fishStats = FindObjectOfType<JSONLoader>().GetFishDataByName(prefab.name);
-                        if (fishStats != null)
-                        {
-                            FindObjectOfType<JSONLoader>().spawnedFishStats[uniqueName] = fishStats;
-                        }
-                        Plant plantStats = FindObjectOfType<JSONLoader>().GetPlantDataByName(prefab.name);
-                        if (plantStats != null)
-                        {
-                            FindObjectOfType<JSONLoader>().spawnedPlantStats[uniqueName] = plantStats;
-                        }
-                    }
-
-                }
-
-            }
+        hasCollided = hasCollidedWithTank();
+        if (hasCollided)
+        {
+            objectRenderer.material = collidedMaterial;
         }
         else
         {
-            isObjectSelected = false;
+            objectRenderer.material = originalMaterial;
         }
+    }
 
-        if (isObjectPlaced && spawnedObject != null && spawnedObject.layer == LayerMask.NameToLayer("Selectable") && canInteract)
+    private void HandleObjectPlacement()
+    {
+        // Check for collision
+        hasCollided = hasCollidedWithTank();
+
+        // Object placement is allowed only when it's not colliding
+        Ray ray = placementCamera.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hitInfo;
+        if (Physics.Raycast(ray, out hitInfo, Mathf.Infinity, substrateLayer))
         {
-            if (hasCollided)
-            {
-                if (objectRenderer != null && collidedMaterial != null)
-                {
-                    objectRenderer.material = collidedMaterial;
-                }
-                canInteract = false;
+            Vector3 targetPosition = hitInfo.point;
+            spawnedObject.transform.position = targetPosition;
+        }
 
-                Debug.Log("Object collided with the tank.");
-            }
-            else
+        if (Input.GetMouseButtonDown(0) && !hasCollided)
+        {
+            isLocked = true;
+            Rigidbody rb = spawnedObject.GetComponent<Rigidbody>();
+            if (rb != null)
             {
-                if (objectRenderer != null && hoverMaterial != null)
+                rb.isKinematic = true;
+            }
+            canInteract = false;
+            isObjectPlaced = true;
+        }
+
+        // Rotation and scaling are allowed regardless of collision
+        HandleObjectRotationAndScaling();
+    }
+
+    void HandleObjectRotationAndScaling()
+    {
+        float rotationY = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
+        spawnedObject.transform.Rotate(Vector3.up, rotationY);
+
+        float rotationX = Input.GetAxis("Vertical") * rotationSpeed * Time.deltaTime;
+        spawnedObject.transform.Rotate(Vector3.right, rotationX);
+
+        float scale = 0f;
+        if (Input.GetKey(KeyCode.Q))
+            scale = -scaleSpeed * Time.deltaTime;
+        else if (Input.GetKey(KeyCode.E))
+            scale = scaleSpeed * Time.deltaTime;
+
+        Vector3 newScale = spawnedObject.transform.localScale + new Vector3(scale, scale, scale);
+        newScale = Vector3.ClampMagnitude(newScale, maxScale);
+        newScale = Vector3.Max(newScale, new Vector3(minScale, minScale, minScale));
+        spawnedObject.transform.localScale = newScale;
+    }
+
+    private bool hasCollidedWithTank()
+    {
+        Collider[] hitColliders = Physics.OverlapBox(spawnedObject.transform.position, spawnedObject.transform.localScale / 2, Quaternion.identity);
+        foreach (var hitCollider in hitColliders)
+        {
+            foreach (var tankCollider in tankColliders)
+            {
+                if (hitCollider == tankCollider)
                 {
-                    objectRenderer.material = hoverMaterial;
+                    return true;
                 }
-                canInteract = true;
             }
         }
+        return false;
     }
 
     public void OnPlantButtonClick()
@@ -156,7 +152,6 @@ public class ObjectPlacementController : MonoBehaviour
             selectedPrefabIndex = buttonIndex;
             SpawnObject();
         }
-
         shopPanel.SetActive(false);
     }
 
@@ -191,28 +186,9 @@ public class ObjectPlacementController : MonoBehaviour
         hasCollided = false;
 
         objectRenderer = spawnedObject.GetComponent<Renderer>();
-        if (objectRenderer != null)
-        {
-            originalMaterial = objectRenderer.material;
-            objectRenderer.material = hoverMaterial;
-        }
+        originalMaterial = objectRenderer.material;
+        objectRenderer.material = hoverMaterial;
 
         shopPanel.SetActive(false);
-    }
-
-    private bool hasCollidedWithTank()
-    {
-        Collider[] colliders = spawnedObject.GetComponentsInChildren<Collider>();
-        foreach (var collider in colliders)
-        {
-            foreach (var tankCollider in tankColliders)
-            {
-                if (collider == tankCollider)
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 }

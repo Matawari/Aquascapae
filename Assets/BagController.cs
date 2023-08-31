@@ -12,12 +12,13 @@ public class BagController : MonoBehaviour
     public float maxElevationAboveInitial = 2f; // Maximum elevation above initial position
     public ParticleSystem substrateEmitter;  // Assign the particle system in the Unity Editor
     public SubstrateAccumulator substrateAccumulator;
-
-
+    public float minPouringAngle = 20f; // Minimum angle to start pouring
+    public float maxPouringAngle = 90f; // Maximum angle to continue pouring
 
     private Vector3 targetPosition;
     private Quaternion targetRotation;
     private float initialElevation;
+    private bool isPouring = false; // Flag to track whether the substrate is currently pouring or not
 
     private void Start()
     {
@@ -31,6 +32,8 @@ public class BagController : MonoBehaviour
 
     private void Update()
     {
+        Debug.Log("BagController Update is running");
+
         // Elevation control with middle mouse scroll
         float scrollDelta = Input.GetAxis("Mouse ScrollWheel");
         float newElevation = targetPosition.y - scrollDelta * elevationSpeed;
@@ -57,29 +60,34 @@ public class BagController : MonoBehaviour
         transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * lerpSpeed);
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
-        if (transform.rotation.eulerAngles.z > 20f && transform.rotation.eulerAngles.z < 90f)  // Ensure rotation is between 20 and 90 degrees
+        // Check the pouring angle
+        if (transform.rotation.eulerAngles.z > minPouringAngle && transform.rotation.eulerAngles.z < maxPouringAngle)
         {
-            if (!substrateEmitter.isPlaying)
+            if (!isPouring)
             {
                 substrateEmitter.Play();
+                isPouring = true;
             }
         }
         else
         {
-            if (substrateEmitter.isPlaying)
+            if (isPouring)
             {
                 substrateEmitter.Stop();
+                isPouring = false;
             }
         }
     }
 
     private void OnParticleCollision(GameObject other)
     {
-        if (other.CompareTag("Base"))  // Assuming your tank has a tag "Tank"
+        Debug.Log("Particle Collision Detected");
+
+        if (other.CompareTag("Base"))
         {
-            Vector3 collisionPoint = other.transform.position;  // For simplicity, we're using the tank's position. You could get more precise collision points if necessary.
+            Debug.Log("Particle collided with Base");
+            Vector3 collisionPoint = other.transform.position;
             substrateAccumulator.Accumulate(collisionPoint);
         }
     }
-
 }
