@@ -44,10 +44,18 @@ public class BagController : MonoBehaviour
         newElevation = Mathf.Clamp(newElevation, initialElevation, initialElevation + maxElevationAboveInitial);
         targetPosition.y = newElevation;
 
-        // Rotation control
-        float rotationChange = Input.GetKey(KeyCode.W) ? -rotationSpeed : (Input.GetKey(KeyCode.S) ? rotationSpeed : 0f);
-        float newZRotation = Mathf.Clamp(transform.rotation.eulerAngles.z + rotationChange * Time.deltaTime, minRotation, maxRotation);
-        targetRotation = Quaternion.Euler(targetRotation.eulerAngles.x, targetRotation.eulerAngles.y, newZRotation);
+
+        // Rotation Control for Z-axis
+        float rotationChangeZ = Input.GetKey(KeyCode.W) ? -rotationSpeed : (Input.GetKey(KeyCode.S) ? rotationSpeed : 0f);
+        float newZRotation = Mathf.Clamp(transform.rotation.eulerAngles.z + rotationChangeZ * Time.deltaTime, minRotation, maxRotation);
+
+        // Rotation Control for Y-axis
+        float rotationChangeY = Input.GetKey(KeyCode.A) ? -rotationSpeed : (Input.GetKey(KeyCode.D) ? rotationSpeed : 0f);
+        float newYRotation = transform.rotation.eulerAngles.y + rotationChangeY * Time.deltaTime;
+
+        // Set the new target rotation
+        targetRotation = Quaternion.Euler(targetRotation.eulerAngles.x, newYRotation, newZRotation);
+
 
         // Mouse movement
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
