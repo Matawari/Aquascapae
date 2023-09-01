@@ -27,7 +27,6 @@ public class PlantInfoPanel : MonoBehaviour
     private Plant currentPlant;
     public PlantInfoPanel plantInfoPanel; // Reference to the PlantInfoPanel script
 
-
     public JSONLoader jsonLoader;
 
     public void UpdatePlantInfo(Plant plant)
