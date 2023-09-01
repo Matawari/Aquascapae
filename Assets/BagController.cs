@@ -2,82 +2,87 @@ using UnityEngine;
 
 public class BagController : MonoBehaviour
 {
-    public Transform tankBounds; // Assign the tank object here
-    public Camera mainCamera; // Assign the main camera here
-    public float rotationSpeed = 60f; // Rotation speed in degrees per second
-    public float minRotation = 60f; // Minimum rotation in degrees
-    public float maxRotation = 120f; // Maximum rotation in degrees
-    public float lerpSpeed = 5f; // Lerp speed for smoother movement and rotation
-    public float elevationSpeed = 0.1f; // Elevation speed when scrolling the mouse
-    public float maxElevationAboveInitial = 2f; // Maximum elevation above initial position
-    public ParticleSystem substrateEmitter;  // Assign the particle system in the Unity Editor
+    public Transform tankBounds;
+    public Camera mainCamera;
+    public float rotationSpeed = 60f;
+    public float minRotation = 0f;
+    public float maxRotation = 45f;
+    public float lerpSpeed = 5f;
+    public float elevationSpeed = 0.1f;
+    public float maxElevationAboveInitial = 2f;
+    public ParticleSystem substrateEmitter;
     public SubstrateAccumulator substrateAccumulator;
-    public float minPouringAngle = 20f; // Minimum angle to start pouring
-    public float maxPouringAngle = 90f; // Maximum angle to continue pouring
+    public float minPouringAngle = 20f;
+    public float maxPouringAngle = 90f;
+    public AudioSource pourSound;
 
     private Vector3 targetPosition;
     private Quaternion targetRotation;
     private float initialElevation;
-    private bool isPouring = false; // Flag to track whether the substrate is currently pouring or not
+    private bool isPouring = false;
+    private float accumulatedXRotation;
+    private float targetVolume = 0f;
+    private float fadeSpeed = 5f;
+    public float soilAmount = 100.0f;
 
     private void Start()
     {
-        // Initialize target position and rotation
+        pourSound = GetComponent<AudioSource>();
+        pourSound.playOnAwake = false;  // Disable play on awake
+
+        if (pourSound == null)
+        {
+            Debug.LogError("AudioSource not found!");
+        }
+
         targetPosition = transform.position;
         targetRotation = transform.rotation;
-
-        // Store the initial elevation for later reference
         initialElevation = transform.position.y;
-
-        // Stop the particle system from emitting at the start
         substrateEmitter.Stop();
-    }
+        accumulatedXRotation = transform.rotation.eulerAngles.x;
+        pourSound = GetComponent<AudioSource>();
 
+        if (pourSound == null)
+        {
+            Debug.LogError("AudioSource not found!");
+        }
+    }
 
     private void Update()
     {
-        Debug.Log("BagController Update is running");
-
-        // Elevation control with middle mouse scroll
         float scrollDelta = Input.GetAxis("Mouse ScrollWheel");
         float newElevation = targetPosition.y - scrollDelta * elevationSpeed;
         newElevation = Mathf.Clamp(newElevation, initialElevation, initialElevation + maxElevationAboveInitial);
         targetPosition.y = newElevation;
 
+        float rotationChangeX = Input.GetKey(KeyCode.W) ? -rotationSpeed : (Input.GetKey(KeyCode.S) ? rotationSpeed : 0f);
+        accumulatedXRotation += rotationChangeX * Time.deltaTime;
+        accumulatedXRotation = Mathf.Clamp(accumulatedXRotation, minRotation, maxRotation);
 
-        // Rotation Control for Z-axis
-        float rotationChangeZ = Input.GetKey(KeyCode.W) ? -rotationSpeed : (Input.GetKey(KeyCode.S) ? rotationSpeed : 0f);
-        float newZRotation = Mathf.Clamp(transform.rotation.eulerAngles.z + rotationChangeZ * Time.deltaTime, minRotation, maxRotation);
-
-        // Rotation Control for Y-axis
         float rotationChangeY = Input.GetKey(KeyCode.A) ? -rotationSpeed : (Input.GetKey(KeyCode.D) ? rotationSpeed : 0f);
-        float newYRotation = transform.rotation.eulerAngles.y + rotationChangeY * Time.deltaTime;
+        float accumulatedYRotation = transform.rotation.eulerAngles.y + rotationChangeY * Time.deltaTime;
 
-        // Set the new target rotation
-        targetRotation = Quaternion.Euler(targetRotation.eulerAngles.x, newYRotation, newZRotation);
+        targetRotation = Quaternion.Euler(accumulatedXRotation, accumulatedYRotation, targetRotation.eulerAngles.z);
 
-
-        // Mouse movement
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f))
         {
             if (hit.collider.transform == tankBounds)
             {
-                // Update the target position based on mouse movement within the tank's bounds
                 targetPosition = new Vector3(hit.point.x, targetPosition.y, hit.point.z);
             }
         }
 
-        // Smoothly move and rotate the bag towards target values
         transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * lerpSpeed);
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
-        if (transform.rotation.eulerAngles.z > minPouringAngle && transform.rotation.eulerAngles.z < maxPouringAngle)
+        if (accumulatedXRotation > minPouringAngle && accumulatedXRotation < maxPouringAngle)
         {
             if (!isPouring)
             {
                 substrateEmitter.Play();
                 isPouring = true;
+                targetVolume = 1f; // Set target volume to max
             }
         }
         else
@@ -86,6 +91,53 @@ public class BagController : MonoBehaviour
             {
                 substrateEmitter.Stop();
                 isPouring = false;
+                targetVolume = 0f; // Set target volume to zero
+            }
+        }
+
+        if (accumulatedXRotation > minPouringAngle && accumulatedXRotation < maxPouringAngle && soilAmount > 0)
+        {
+            if (!isPouring)
+            {
+                substrateEmitter.Play();
+                isPouring = true;
+                targetVolume = 1f; // Set target volume to max
+            }
+
+            // Decrease the remaining soil
+            soilAmount -= Time.deltaTime;  // Modify this line according to how fast you want the soil to decrease
+            if (soilAmount < 0)
+            {
+                soilAmount = 0;
+                substrateEmitter.Stop();
+                isPouring = false;
+                targetVolume = 0f; // Set target volume to zero
+            }
+        }
+        else
+        {
+            if (isPouring)
+            {
+                substrateEmitter.Stop();
+                isPouring = false;
+                targetVolume = 0f; // Set target volume to zero
+            }
+        }
+
+        // Fade volume
+        if (pourSound != null)
+        {
+            pourSound.volume = Mathf.Lerp(pourSound.volume, targetVolume, Time.deltaTime * fadeSpeed);
+
+            // Start playing the sound if it's not already playing
+            if (pourSound.volume > 0.01f && !pourSound.isPlaying)
+            {
+                pourSound.Play();
+            }
+            // Stop playing the sound if it has faded out
+            else if (pourSound.volume <= 0.01f && pourSound.isPlaying)
+            {
+                pourSound.Stop();
             }
         }
     }

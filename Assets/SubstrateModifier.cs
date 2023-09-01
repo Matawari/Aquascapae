@@ -44,14 +44,14 @@ public class SubstrateModifier : MonoBehaviour
 
                 for (int i = 0; i < vertices.Length; i++)
                 {
-                    if (vertices[i].y >= minYValue)  // Only modify vertices above the minimum y-value
+                    if (vertices[i].y >= minYValue)
                     {
                         float distance = Vector3.Distance(vertices[i], localPoint);
 
                         if (distance < radius)
                         {
                             float falloff = 1f - Mathf.Clamp01(distance / radius);
-                            vertices[i].y += modificationStrength * falloff * Time.deltaTime;  // Use '+=' for upward movement
+                            vertices[i].y += modificationStrength * falloff * Time.deltaTime;
                         }
                     }
                 }
@@ -64,6 +64,7 @@ public class SubstrateModifier : MonoBehaviour
             }
         }
     }
+
 
 
     private void SaveMesh(Mesh mesh)
