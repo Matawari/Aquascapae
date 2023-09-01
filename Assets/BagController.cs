@@ -28,7 +28,11 @@ public class BagController : MonoBehaviour
 
         // Store the initial elevation for later reference
         initialElevation = transform.position.y;
+
+        // Stop the particle system from emitting at the start
+        substrateEmitter.Stop();
     }
+
 
     private void Update()
     {
@@ -60,7 +64,6 @@ public class BagController : MonoBehaviour
         transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * lerpSpeed);
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
-        // Check the pouring angle
         if (transform.rotation.eulerAngles.z > minPouringAngle && transform.rotation.eulerAngles.z < maxPouringAngle)
         {
             if (!isPouring)

@@ -4,28 +4,33 @@ public class SubstrateModifier : MonoBehaviour
 {
     public float modificationStrength = 0.1f;
     public float radius = 0.1f;
+    public ParticleSystem particleSystem; // Reference to your particle system
 
-    private void Update()
+    private void Start()
+    {
+        // Assign the OnParticleCollision function to the particle system's collision events
+        ParticleSystem.CollisionModule collisionModule = particleSystem.collision;
+        collisionModule.enabled = true;
+        collisionModule.SetPlane(0, transform);
+    }
+
+    private void OnParticleCollision(GameObject other)
     {
         // Check if the game is not paused or fast-forwarded
         if (!TimeController.IsGamePausedOrFastForwarded())
         {
-            if (Input.GetMouseButton(0))
-            {
-                ModifySubstrate();
-            }
+            ModifySubstrate(other.transform.position);
         }
     }
 
-    private void ModifySubstrate()
+    private void ModifySubstrate(Vector3 collisionPoint)
     {
         // Ensure that the game is not paused or fast-forwarded before making modifications
         if (!TimeController.IsGamePausedOrFastForwarded())
         {
             RaycastHit hit;
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, LayerMask.GetMask("Substrate")))
+            if (Physics.Raycast(collisionPoint, Vector3.down, out hit, Mathf.Infinity, LayerMask.GetMask("Substrate")))
             {
                 Mesh mesh = hit.collider.GetComponent<MeshFilter>().mesh;
                 Vector3[] vertices = mesh.vertices;

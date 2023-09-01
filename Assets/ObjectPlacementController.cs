@@ -68,15 +68,24 @@ public class ObjectPlacementController : MonoBehaviour
         }
 
         hasCollided = hasCollidedWithTank();
-        if (hasCollided)
+
+        if (objectRenderer != null) // Null check
         {
-            objectRenderer.material = collidedMaterial;
+            if (hasCollided)
+            {
+                objectRenderer.material = collidedMaterial;
+            }
+            else
+            {
+                objectRenderer.material = originalMaterial;
+            }
         }
         else
         {
-            objectRenderer.material = originalMaterial;
+            Debug.LogWarning("objectRenderer is null");
         }
     }
+
 
     private void HandleObjectPlacement()
     {
@@ -130,6 +139,12 @@ public class ObjectPlacementController : MonoBehaviour
 
     private bool hasCollidedWithTank()
     {
+        if (spawnedObject == null) // Null check
+        {
+            Debug.LogWarning("spawnedObject is null");
+            return false;
+        }
+
         Collider[] hitColliders = Physics.OverlapBox(spawnedObject.transform.position, spawnedObject.transform.localScale / 2, Quaternion.identity);
         foreach (var hitCollider in hitColliders)
         {
@@ -143,6 +158,8 @@ public class ObjectPlacementController : MonoBehaviour
         }
         return false;
     }
+
+
 
     public void OnPlantButtonClick()
     {
