@@ -11,9 +11,10 @@ public class PlantWaterInteraction : MonoBehaviour
         jsonLoader = GetComponent<JSONLoader>();
         if (jsonLoader == null)
         {
-            Debug.LogError("JSONLoader component not found.");
+            Debug.LogError("JSONLoader component not found on GameObject: " + gameObject.name);
         }
     }
+
 
     private void OnTriggerEnter(Collider other)
     {

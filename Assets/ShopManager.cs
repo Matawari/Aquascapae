@@ -3,9 +3,10 @@ using UnityEngine.UI;
 
 public class ShopManager : MonoBehaviour
 {
-    public GameObject[] categoryPanels; // Array of category panels (Plants, Fishes, etc.)
-    public GameObject plantDataPanel;    // Reference to the plant data panel
-    public GameObject fishDataPanel;     // Reference to the fish data panel
+    public GameObject[] categoryPanels; // Array of category panels (Plants, Fishes, Substrates, etc.)
+    public GameObject plantDataPanel;   // Reference to the plant data panel
+    public GameObject fishDataPanel;    // Reference to the fish data panel
+    public GameObject substrateDataPanel; // Reference to the substrate data panel
     public AudioSource hoverSound;
     public AudioSource clickSound; // Reference to the AudioSource component for the click sound
 
@@ -44,6 +45,13 @@ public class ShopManager : MonoBehaviour
         fishDataPanel.SetActive(true);
         // Set the fish data in the fish data panel based on the provided Fish object
         // You can access the UI elements in the fish data panel and update their values
+    }
+
+    public void ShowSubstrateDataPanel(Substrate substrate)
+    {
+        substrateDataPanel.SetActive(true);
+        // Set the substrate data in the substrate data panel based on the provided Substrate object
+        // You can access the UI elements in the substrate data panel and update their values
     }
 
     public void PlayHoverSound()

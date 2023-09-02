@@ -9,12 +9,17 @@ namespace AquascapeMadness // Replace with your namespace
         private WaterBody waterBody;
         private WaterQualityParameters waterQuality;
         private PlantBehaviorManager plantBehavior;
+        private Substrate currentSubstrate;
+
 
         // Add more component references as needed
 
         private void Start()
         {
             InitializeComponents();
+            InitializeComponents();
+            JSONLoader jsonLoader = FindObjectOfType<JSONLoader>();
+            currentSubstrate = jsonLoader.GetSubstrateDataByName("Your Substrate Name");
         }
 
         private void Update()

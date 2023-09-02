@@ -11,6 +11,7 @@ public class JSONLoader : MonoBehaviour
     [SerializeField] private string lightFileName = "lights.json";
     [SerializeField] private string algaeFileName = "algae.json"; // Add this line
     [SerializeField] private string bacteriaFileName = "bacteria.json"; // Add this line
+    [SerializeField] private string substrateFileName = "substrates.json";
 
     public PlantData plantData;
     public FilterData filterData = new FilterData();
@@ -18,6 +19,7 @@ public class JSONLoader : MonoBehaviour
     public LightData lightData = new LightData();
     public AlgaeData algaeData = new AlgaeData();
     public BacteriaData bacteriaData = new BacteriaData();
+    public SubstrateData substrateData;
 
     public PlantDataPanel plantDataPanel;
     public PlantInfoPanel plantInfoPanel;
@@ -29,6 +31,7 @@ public class JSONLoader : MonoBehaviour
     public LightInfoPanel lightInfoPanel;
     public AlgaeDataPanel algaeDataPanel; // Add this reference
     public BacteriaDataPanel bacteriaDataPanel; // Add this reference
+    public SubstrateDataPanel substrateDataPanel;
 
     public Dictionary<string, Fish> spawnedFishStats = new Dictionary<string, Fish>();
     public Dictionary<string, Plant> spawnedPlantStats = new Dictionary<string, Plant>();
@@ -122,6 +125,20 @@ public class JSONLoader : MonoBehaviour
         Debug.LogError("LightSetting not found in JSONLoader");
         return null;
     }
+    public Substrate GetSubstrateDataByName(string substrateName)
+    {
+        if (substrateData != null && substrateData.substrates != null)
+        {
+            return Array.Find(substrateData.substrates, substrate => substrate.name == substrateName);
+        }
+        else
+        {
+            Debug.LogError("Substrate data or substrateData.substrates is null.");
+            return null;
+        }
+    }
+
+
 
     private void Start()
     {
@@ -153,6 +170,7 @@ public class JSONLoader : MonoBehaviour
         LoadFilterData();
         LoadFishData();
         LoadLightData();
+        LoadSubstrateData();
     }
 
     public void LoadPlantData()
@@ -333,6 +351,23 @@ public class JSONLoader : MonoBehaviour
         Debug.Log("First algae name: " + (algaeData != null && algaeData.algae.Length > 0 ? algaeData.algae[0].name : "No algae"));
     }
 
+    public void LoadSubstrateData()
+    {
+        string jsonFilePath = Path.Combine(Application.streamingAssetsPath, substrateFileName);
+        Debug.Log("Trying to load substrate data from: " + jsonFilePath);  // Debugging line
+
+        if (File.Exists(jsonFilePath))
+        {
+            string jsonData = File.ReadAllText(jsonFilePath);
+            substrateData = JsonUtility.FromJson<SubstrateData>(jsonData);
+        }
+        else
+        {
+            Debug.LogError("JSON file not found: " + jsonFilePath);
+        }
+    }
+
+
     public void LoadBacteriaData()
     {
         string bacteriaFilePath = Path.Combine(Application.streamingAssetsPath, bacteriaFileName);
@@ -384,6 +419,7 @@ public class JSONLoader : MonoBehaviour
 
         Debug.Log("LoadBacteriaData finished.");
         Debug.Log("First bacteria name: " + (bacteriaData != null && bacteriaData.bacteria.Length > 0 ? bacteriaData.bacteria[0].name : "No bacteria"));
+
     }
 
 
@@ -437,5 +473,10 @@ public class JSONLoader : MonoBehaviour
     public class BacteriaData
     {
         public Bacteria[] bacteria;
+    }
+
+    public class SubstrateData
+    {
+        public Substrate[] substrates;
     }
 }
