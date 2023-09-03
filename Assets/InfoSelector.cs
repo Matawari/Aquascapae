@@ -9,6 +9,7 @@ public class InfoSelector : MonoBehaviour
     public FilterInfoPanel filterInfoPanel;
     public Camera mainCamera;
     public LayerMask interactableLayerMask;
+    public static ObjectPlacementController instance;
 
     private void Update()
     {

@@ -8,10 +8,11 @@ public class SpawnButtonHandler : MonoBehaviour
     public ObjectPlacementController placementController;
     public int prefabIndex;
     public TextMeshProUGUI moneyText;
+    public Vector3 spawnScale = Vector3.one; // Add this line
+    public JSONLoader jsonLoader;
+
     private Button button;
     private decimal itemPriceUSD;
-
-    public JSONLoader jsonLoader;
 
     private void Start()
     {
@@ -24,24 +25,18 @@ public class SpawnButtonHandler : MonoBehaviour
 
     private void OnButtonClick()
     {
-        if (!TimeController.IsGamePausedOrFastForwarded())
+        itemPriceUSD = GetItemPriceFromJSON();
+        if (CurrencyManager.Instance.SubtractUSD(itemPriceUSD))
         {
-            itemPriceUSD = GetItemPriceFromJSON();
-            if (CurrencyManager.Instance.SubtractUSD(itemPriceUSD))
-            {
-                placementController.SelectedPrefabIndex = prefabIndex;
+            placementController.SelectedPrefabIndex = prefabIndex;
+            placementController.SpawnObject(spawnScale);  // Pass the scale to the SpawnObject method
+            UpdateMoneyText();
 
-                // Move the SpawnObject() call here, after setting the prefab index
-                placementController.SpawnObject();
-
-                UpdateMoneyText();
-
-                SoundManager.Instance.PlayKachingSound();
-            }
-            else
-            {
-                SoundManager.Instance.PlayInsufficientFundsSound();
-            }
+            SoundManager.Instance.PlayKachingSound();
+        }
+        else
+        {
+            SoundManager.Instance.PlayInsufficientFundsSound();
         }
     }
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class ObjectPlacementController : MonoBehaviour
 {
     public GameObject[] objectPrefabs;
+    public Transform spawnPositionEmpty;
     public LayerMask substrateLayer;
     public Camera placementCamera;
     public Material collidedMaterial;
@@ -39,6 +40,7 @@ public class ObjectPlacementController : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
     public bool IsObjectBeingPlaced()
     {
         return isObjectSelected && canInteract && !isLocked;
@@ -69,7 +71,7 @@ public class ObjectPlacementController : MonoBehaviour
 
         hasCollided = hasCollidedWithTank();
 
-        if (objectRenderer != null) // Null check
+        if (objectRenderer != null)
         {
             if (hasCollided)
             {
@@ -86,13 +88,8 @@ public class ObjectPlacementController : MonoBehaviour
         }
     }
 
-
     private void HandleObjectPlacement()
     {
-        // Check for collision
-        hasCollided = hasCollidedWithTank();
-
-        // Object placement is allowed only when it's not colliding
         Ray ray = placementCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit hitInfo;
         if (Physics.Raycast(ray, out hitInfo, Mathf.Infinity, substrateLayer))
@@ -113,7 +110,6 @@ public class ObjectPlacementController : MonoBehaviour
             isObjectPlaced = true;
         }
 
-        // Rotation and scaling are allowed regardless of collision
         HandleObjectRotationAndScaling();
     }
 
@@ -139,7 +135,7 @@ public class ObjectPlacementController : MonoBehaviour
 
     private bool hasCollidedWithTank()
     {
-        if (spawnedObject == null) // Null check
+        if (spawnedObject == null)
         {
             Debug.LogWarning("spawnedObject is null");
             return false;
@@ -159,26 +155,25 @@ public class ObjectPlacementController : MonoBehaviour
         return false;
     }
 
-
-
     public void OnPlantButtonClick()
     {
         int buttonIndex = plantButtons.IndexOf(UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject.GetComponent<Button>());
         if (buttonIndex >= 0 && buttonIndex < plantButtons.Count)
         {
             selectedPrefabIndex = buttonIndex;
-            SpawnObject();
+            SpawnObject(Vector3.one);  // Here, pass the default scale Vector3.one or some other scale
         }
         shopPanel.SetActive(false);
     }
 
-    public void SpawnObject()
+
+    public void SpawnObject(Vector3 scale)
     {
         if (selectedPrefabIndex < 0 || selectedPrefabIndex >= objectPrefabs.Length)
             return;
 
         GameObject prefab = objectPrefabs[selectedPrefabIndex];
-        prefab.transform.localScale = Vector3.one;
+        Vector3 originalPrefabScale = prefab.transform.localScale;
 
         Ray ray = placementCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0f));
         RaycastHit hitInfo;
@@ -186,16 +181,13 @@ public class ObjectPlacementController : MonoBehaviour
 
         if (Physics.Raycast(ray, out hitInfo, Mathf.Infinity, substrateLayer))
         {
-            spawnPosition = hitInfo.point;
+            spawnPosition = spawnPositionEmpty.transform.position;
         }
 
-        Quaternion spawnRotation = Quaternion.identity;
-
-        GameObject newObject = Instantiate(prefab, spawnPosition, spawnRotation);
-        newObject.transform.localScale = Vector3.one;
+        GameObject newObject = Instantiate(prefab, spawnPosition, Quaternion.identity);
+        newObject.transform.localScale = scale;
 
         spawnedObject = newObject;
-
         isObjectSelected = true;
         isLocked = false;
         canInteract = true;
