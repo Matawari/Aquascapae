@@ -19,7 +19,8 @@ public class JSONLoader : MonoBehaviour
     public LightData lightData = new LightData();
     public AlgaeData algaeData = new AlgaeData();
     public BacteriaData bacteriaData = new BacteriaData();
-    public SubstrateData substrateData;
+    public SubstrateData substrateData = new SubstrateData();
+
 
     public PlantDataPanel plantDataPanel;
     public PlantInfoPanel plantInfoPanel;
@@ -32,6 +33,7 @@ public class JSONLoader : MonoBehaviour
     public AlgaeDataPanel algaeDataPanel; // Add this reference
     public BacteriaDataPanel bacteriaDataPanel; // Add this reference
     public SubstrateDataPanel substrateDataPanel;
+    public SubstrateInteraction substrateInteraction;
 
     public Dictionary<string, Fish> spawnedFishStats = new Dictionary<string, Fish>();
     public Dictionary<string, Plant> spawnedPlantStats = new Dictionary<string, Plant>();
@@ -125,6 +127,8 @@ public class JSONLoader : MonoBehaviour
         Debug.LogError("LightSetting not found in JSONLoader");
         return null;
     }
+
+
     public Substrate GetSubstrateDataByName(string substrateName)
     {
         if (substrateData != null && substrateData.substrates != null)
@@ -137,7 +141,6 @@ public class JSONLoader : MonoBehaviour
             return null;
         }
     }
-
 
 
     private void Start()
@@ -171,6 +174,8 @@ public class JSONLoader : MonoBehaviour
         LoadFishData();
         LoadLightData();
         LoadSubstrateData();
+        LoadAlgaeData(); // Add this line
+        LoadBacteriaData(); // Add this line
     }
 
     public void LoadPlantData()
@@ -308,32 +313,25 @@ public class JSONLoader : MonoBehaviour
                 string jsonData = File.ReadAllText(algaeFilePath);
                 algaeData = JsonUtility.FromJson<AlgaeData>(jsonData);
 
-                if (algaeData != null && algaeData.algae != null && algaeData.algae.Length > 0)
+                if (algaeData != null)
                 {
-                    foreach (Algae loadedAlgae in algaeData.algae)
-                    {
-                        Debug.Log("Loaded algae: " + loadedAlgae.name);
-                    }
+                    Debug.Log("algaeData is not null");
 
-                    if (algaeDataPanel != null)
+                    if (algaeData.algae != null)
                     {
-                        if (algaeData.algae.Length > 0)
-                        {
-                            algaeDataPanel.UpdateAlgaeData(algaeData.algae[0]);
-                        }
-                        else
-                        {
-                            Debug.LogError("No algae data found in JSONLoader");
-                        }
+                        Debug.Log("algaeData.algae is not null");
+                        Debug.Log("Number of algae loaded: " + algaeData.algae.Length);
+
+                        // Existing code
                     }
                     else
                     {
-                        Debug.LogError("AlgaeDataPanel is null in JSONLoader");
+                        Debug.LogError("algaeData.algae is null.");
                     }
                 }
                 else
                 {
-                    Debug.LogError("Algae data is null or empty in JSONLoader");
+                    Debug.LogError("algaeData is null.");
                 }
             }
             catch (Exception e)
@@ -345,25 +343,6 @@ public class JSONLoader : MonoBehaviour
         else
         {
             Debug.LogError("Algae file not found: " + algaeFilePath);
-        }
-
-        Debug.Log("LoadAlgaeData finished.");
-        Debug.Log("First algae name: " + (algaeData != null && algaeData.algae.Length > 0 ? algaeData.algae[0].name : "No algae"));
-    }
-
-    public void LoadSubstrateData()
-    {
-        string jsonFilePath = Path.Combine(Application.streamingAssetsPath, substrateFileName);
-        Debug.Log("Trying to load substrate data from: " + jsonFilePath);  // Debugging line
-
-        if (File.Exists(jsonFilePath))
-        {
-            string jsonData = File.ReadAllText(jsonFilePath);
-            substrateData = JsonUtility.FromJson<SubstrateData>(jsonData);
-        }
-        else
-        {
-            Debug.LogError("JSON file not found: " + jsonFilePath);
         }
     }
 
@@ -378,32 +357,24 @@ public class JSONLoader : MonoBehaviour
                 string jsonData = File.ReadAllText(bacteriaFilePath);
                 bacteriaData = JsonUtility.FromJson<BacteriaData>(jsonData);
 
-                if (bacteriaData != null && bacteriaData.bacteria != null && bacteriaData.bacteria.Length > 0)
+                if (bacteriaData != null)
                 {
-                    foreach (Bacteria loadedBacteria in bacteriaData.bacteria)
-                    {
-                        Debug.Log("Loaded bacteria: " + loadedBacteria.name);
-                    }
+                    Debug.Log("bacteriaData is not null");
 
-                    if (bacteriaDataPanel != null)
+                    if (bacteriaData.bacteria != null)
                     {
-                        if (bacteriaData.bacteria.Length > 0)
-                        {
-                            bacteriaDataPanel.UpdateBacteriaData(bacteriaData.bacteria[0]);
-                        }
-                        else
-                        {
-                            Debug.LogError("No bacteria data found in JSONLoader");
-                        }
+                        Debug.Log("bacteriaData.bacteria is not null");
+                        Debug.Log("Number of bacteria loaded: " + bacteriaData.bacteria.Length);
+                        // Existing code
                     }
                     else
                     {
-                        Debug.LogError("BacteriaDataPanel is null in JSONLoader");
+                        Debug.LogError("bacteriaData.bacteria is null");
                     }
                 }
                 else
                 {
-                    Debug.LogError("Bacteria data is null or empty in JSONLoader");
+                    Debug.LogError("bacteriaData is null");
                 }
             }
             catch (Exception e)
@@ -416,10 +387,40 @@ public class JSONLoader : MonoBehaviour
         {
             Debug.LogError("Bacteria file not found: " + bacteriaFilePath);
         }
+    }
 
-        Debug.Log("LoadBacteriaData finished.");
-        Debug.Log("First bacteria name: " + (bacteriaData != null && bacteriaData.bacteria.Length > 0 ? bacteriaData.bacteria[0].name : "No bacteria"));
 
+    public void LoadSubstrateData()
+    {
+        string jsonFilePath = Path.Combine(Application.streamingAssetsPath, substrateFileName);
+        Debug.Log("Trying to load substrate data from: " + jsonFilePath);
+
+        if (File.Exists(jsonFilePath))
+        {
+            try
+            {
+                string jsonData = File.ReadAllText(jsonFilePath);
+                substrateData = JsonUtility.FromJson<SubstrateData>(jsonData);
+
+                if (substrateData != null && substrateData.substrates != null && substrateData.substrates.Length > 0)
+                {
+                    Debug.Log("Number of substrates loaded: " + substrateData.substrates.Length);  // Added line
+                                                                                                   // Update the panel or whatever UI element you have for substrates
+                }
+                else
+                {
+                    Debug.LogError("Substrate data is null or empty in JSONLoader");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Error parsing substrate JSON: " + e.Message);
+            }
+        }
+        else
+        {
+            Debug.LogError("Substrate JSON file not found: " + jsonFilePath);
+        }
     }
 
 
@@ -475,8 +476,10 @@ public class JSONLoader : MonoBehaviour
         public Bacteria[] bacteria;
     }
 
+    [Serializable]
     public class SubstrateData
     {
         public Substrate[] substrates;
     }
+
 }
