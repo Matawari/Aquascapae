@@ -11,8 +11,10 @@ public class InfoSelector : MonoBehaviour
     public LayerMask interactableLayerMask;
     public static ObjectPlacementController instance;
 
+
     private void Update()
     {
+
         if (Input.GetMouseButtonDown(0) && !ObjectPlacementController.instance.IsObjectBeingPlaced())
         {
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
