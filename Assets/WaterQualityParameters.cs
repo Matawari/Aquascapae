@@ -2,27 +2,46 @@ using UnityEngine;
 
 public class WaterQualityParameters : MonoBehaviour
 {
+    [Header("Water Quality Parameters")]
     public float maxAmmoniaLevel = 1.0f;
     public float minOxygenLevel = 0.0f;
     public float maxOxygenLevel = 10.0f;
     public float maxNitrateLevel = 1.0f;
     public float maxNitriteLevel = 1.0f;
-
-    private float nitrate = 0.0f;
-    private float potassium = 0.0f;
-    private float phosphorus = 0.0f;
-    private float temperature = 25.0f;
-    private float pH = 7.0f;
-    public float wasteLevel = 100.0f;
-    public float nutrientLevel = 0.0f;
     public float bacteriaPopulation = 1000.0f;
-    public float algaePopulation = 0.0f;
-    private float ammoniaLevel = 0.0f;
-    private float oxygenLevel = 100.0f;
-    private float nitrite = 0.0f;
 
-    [SerializeField]
-    private WaterBody waterBody; // Reference to the WaterBody component
+    [Header("Water Parameters")]
+    [SerializeField] private float nitrate = 0.0f;
+    [SerializeField] private float potassium = 0.0f;
+    [SerializeField] private float phosphorus = 0.0f;
+    [SerializeField] private float temperature = 25.0f;
+    [SerializeField] private float pH = 7.0f;
+    [SerializeField] private float wasteLevel = 100.0f;
+    [SerializeField] private float nutrientLevel = 0.0f;
+    [SerializeField] private float algaePopulation = 0.0f;
+    [SerializeField] private float ammoniaLevel = 0.0f;
+    [SerializeField] private float oxygenLevel = 100.0f;
+    [SerializeField] private float nitrite = 0.0f;
+
+    [SerializeField] private WaterBody waterBody; // Reference to the WaterBody component
+    
+
+    public float AlgaePopulation
+    {
+        get { return algaePopulation; }
+        set { algaePopulation = value; }
+    }
+
+    public float BacteriaPopulation
+    {
+        get { return bacteriaPopulation; }
+        set { bacteriaPopulation = value; }
+    }
+
+    public void SetBacteriaPopulation(float population)
+    {
+        bacteriaPopulation = population;
+    }
 
     public void AdjustWaterQualityBasedOnSubstrate(Substrate substrate)
     {
@@ -76,41 +95,31 @@ public class WaterQualityParameters : MonoBehaviour
 
     public float GetOxygenProduction()
     {
-        // Constants for adjusting oxygen production
-        float maxOxygenProduction = 10.0f; // Maximum oxygen production rate
-        float algaeFactor = 0.1f; // Influence of algae population
-        float temperatureFactor = 0.2f; // Influence of water temperature
-        float nutrientFactor = 0.05f; // Influence of nutrient levels
+        float maxOxygenProduction = 10.0f;
+        float algaeFactor = 0.1f;
+        float temperatureFactor = 0.2f;
+        float nutrientFactor = 0.05f;
 
-        // Calculate algae-based oxygen production
         float algaeOxygen = algaePopulation * algaeFactor;
-
-        // Calculate temperature-based oxygen production
         float temperatureOxygen = Mathf.Max(0, (temperature - 25.0f) * temperatureFactor);
-
-        // Calculate nutrient-based oxygen production
         float nutrientOxygen = Mathf.Max(0, nutrientLevel * nutrientFactor);
 
-        // Combine the factors and limit to the maximum production rate
         float totalOxygenProduction = Mathf.Clamp(algaeOxygen + temperatureOxygen + nutrientOxygen, 0.0f, maxOxygenProduction);
 
         return totalOxygenProduction;
     }
 
-    // Property to calculate and return the maximum allowed bacteria population
     public float MaxBacteriaPopulation
     {
         get
         {
             if (waterBody != null)
             {
-                // Calculate the maximum allowed bacteria population based on water body dimensions
                 float maxPopulation = (waterBody.Width * waterBody.Length * waterBody.Depth) / 1000f;
                 return maxPopulation;
             }
             else
             {
-                // Handle the case where waterBody is not assigned
                 Debug.LogError("WaterBody is not assigned! Ensure the WaterBody component is attached to the GameObject.");
                 return 0.0f;
             }

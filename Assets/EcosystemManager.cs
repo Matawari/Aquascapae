@@ -8,6 +8,7 @@ using System.Collections.Generic;
 public class EcosystemManager : MonoBehaviour
 {
     public float timeStep = 1.0f;
+    public float maxBacteriaPopulationThreshold = 5000.0f; // Threshold for high bacterial population warning
 
     public WaterBody waterBody;
     public WaterQualityParameters waterQuality;
@@ -25,7 +26,7 @@ public class EcosystemManager : MonoBehaviour
 
     public float maxBacteriaDensityPerArea = 1000.0f; // Maximum bacteria density per square meter
 
-    private float maxBacteriaPopulationThreshold = 5000.0f; // Threshold for high bacterial population warning
+    
 
     private void Start()
     {
@@ -245,13 +246,13 @@ public class EcosystemManager : MonoBehaviour
     {
         if (waterQuality != null)
         {
-            float algaePopulation = waterQuality.algaePopulation;
+            float algaePopulation = waterQuality.AlgaePopulation;
             if (algaePopulation >= 1000)
             {
                 TriggerEvent("Warning: Algae overgrowth detected!");
             }
 
-            float bacteriaPopulation = waterQuality.bacteriaPopulation;
+            float bacteriaPopulation = waterQuality.BacteriaPopulation;
             if (bacteriaPopulation >= maxBacteriaPopulationThreshold)
             {
                 TriggerEvent("Warning: High bacterial population affecting other living things!");
@@ -292,6 +293,8 @@ public class EcosystemManager : MonoBehaviour
             waterQuality.bacteriaPopulation = currentPopulation;
         }
     }
+
+
 
     private void OnCloseButtonClick()
     {
