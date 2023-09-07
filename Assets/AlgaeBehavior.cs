@@ -3,9 +3,8 @@ using UnityEngine;
 public class AlgaeBehavior : MonoBehaviour
 {
     public WaterQualityParameters waterQualityParameters;
-    public ResourcePool resourcePool; // Add this line
-
-    private float bloomThreshold = 2.0f; // Example threshold for algae bloom
+    public ResourcePool resourcePool;
+    private float bloomThreshold = 2.0f;
 
     public void UpdateAlgae()
     {
@@ -17,9 +16,8 @@ public class AlgaeBehavior : MonoBehaviour
 
     private void ApplyAlgaeEffects()
     {
-        // For example, adjust nutrient levels and affect other organisms' health
-        float pHEffect = 0.05f;       // Example effect on pH levels
-        float nitrateEffect = -0.1f;  // Example effect on nitrate levels
+        float pHEffect = 0.05f;
+        float nitrateEffect = -0.1f;
 
         waterQualityParameters.AdjustpHLevel(pHEffect);
         waterQualityParameters.AdjustNitrateLevel(nitrateEffect);
@@ -27,8 +25,7 @@ public class AlgaeBehavior : MonoBehaviour
 
     private void SimulateAlgaeGrowth()
     {
-        // Simulate growth based on available resources and competition
-        float growthRate = 0.05f; // Example growth rate
+        float growthRate = 0.05f;
 
         float nutrientAvailability = resourcePool.GetNutrientAvailability();
         float lightAvailability = resourcePool.GetLightAvailability();
@@ -39,8 +36,7 @@ public class AlgaeBehavior : MonoBehaviour
 
     private void AlgalResourceCycling()
     {
-        // Convert excess algae into nutrients
-        float conversionRate = 0.2f; // Example conversion rate
+        float conversionRate = 0.2f;
 
         float algaePopulation = waterQualityParameters.GetAlgaePopulation();
         float convertedNutrients = algaePopulation * conversionRate * Time.deltaTime;

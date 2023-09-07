@@ -1,25 +1,87 @@
 using UnityEngine;
 
-namespace AquascapeMadness
+public class WaterBody : MonoBehaviour
 {
-    public class WaterBody : MonoBehaviour
+    [Header("Water Body Properties")]
+    [SerializeField] private float volume = 100.0f; // Volume of the water body in liters
+
+    // Properties to access the private fields
+    public float Volume
     {
-        // Adjust these parameters according to your simulation needs
-        public float waterLevel = 10.0f;
-        public float waterFlowRate = 0.5f;
+        get { return volume; }
+        set { volume = value; }
+    }
 
-        private void Update()
+    // Properties to access box collider dimensions
+    public float Width
+    {
+        get { return GetColliderWidth(); }
+    }
+
+    public float Length
+    {
+        get { return GetColliderLength(); }
+    }
+
+    public float Depth
+    {
+        get { return GetColliderDepth(); }
+    }
+
+    private void Start()
+    {
+        // Initialization logic if needed
+    }
+
+    private void Update()
+    {
+        // Update logic if needed
+    }
+
+    // Additional methods related to the water body can be added here
+
+    private float GetColliderWidth()
+    {
+        // Assuming you have a BoxCollider component attached to this GameObject
+        BoxCollider collider = GetComponent<BoxCollider>();
+        if (collider != null)
         {
-            SimulateWaterFlow();
+            return collider.size.x;
         }
-
-        private void SimulateWaterFlow()
+        else
         {
-            // Implement water flow logic here
-            // For example, adjust water level based on flow rate
-            waterLevel += waterFlowRate * Time.deltaTime;
+            Debug.LogWarning("No BoxCollider found on WaterBody GameObject. Returning default width.");
+            return 1.0f; // Return a default width if no collider is found
+        }
+    }
 
-            // You can also interact with other components, update nutrient distribution, etc.
+    private float GetColliderLength()
+    {
+        // Assuming you have a BoxCollider component attached to this GameObject
+        BoxCollider collider = GetComponent<BoxCollider>();
+        if (collider != null)
+        {
+            return collider.size.z;
+        }
+        else
+        {
+            Debug.LogWarning("No BoxCollider found on WaterBody GameObject. Returning default length.");
+            return 1.0f; // Return a default length if no collider is found
+        }
+    }
+
+    private float GetColliderDepth()
+    {
+        // Assuming you have a BoxCollider component attached to this GameObject
+        BoxCollider collider = GetComponent<BoxCollider>();
+        if (collider != null)
+        {
+            return collider.size.y;
+        }
+        else
+        {
+            Debug.LogWarning("No BoxCollider found on WaterBody GameObject. Returning default depth.");
+            return 1.0f; // Return a default depth if no collider is found
         }
     }
 }

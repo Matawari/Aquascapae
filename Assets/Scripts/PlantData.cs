@@ -38,6 +38,9 @@ public class Plant
     public string description;
     public float nutrientUptakeRate;
     public float herbivoreFoodAmount;
+    public float ammoniaEffect; // Effect of the plant on ammonia levels
+    public float nitrateEffect; // Effect of the plant on nitrate levels
+    public float pHEffect;      // Effect of the plant on pH levels
 
     // New fields for phosphorus and potassium
     public float[] phosphorus_ppm;

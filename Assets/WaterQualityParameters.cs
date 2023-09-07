@@ -1,55 +1,38 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class WaterQualityParameters : MonoBehaviour
 {
-    public float maxAmmoniaLevel = 1.0f; // Adjust the value as needed
-    public float minOxygenLevel = 0.0f;  // Adjust the value as needed
-    public float maxOxygenLevel = 10.0f; // Adjust the value as needed
+    public float maxAmmoniaLevel = 1.0f;
+    public float minOxygenLevel = 0.0f;
+    public float maxOxygenLevel = 10.0f;
+    public float maxNitrateLevel = 1.0f;
+    public float maxNitriteLevel = 1.0f;
 
     private float nitrate = 0.0f;
     private float potassium = 0.0f;
     private float phosphorus = 0.0f;
-    private float temperature = 25.0f; // in Celsius
-    private float pH = 7.0f; // Neutral
-    public float wasteLevel = 100.0f; // example waste level, adjust as needed
-    public float nutrientLevel = 0.0f; // example nutrient level, adjust as needed
-    public float bacteriaPopulation = 1000.0f; // example bacteria population, adjust as needed
-    public float algaePopulation = 0.0f; // Example algae population
-    public float GetNitriteLevel() => nitrate;
-    public float GetNitrateLevel() => nitrate;
+    private float temperature = 25.0f;
+    private float pH = 7.0f;
+    public float wasteLevel = 100.0f;
+    public float nutrientLevel = 0.0f;
+    public float bacteriaPopulation = 1000.0f;
+    public float algaePopulation = 0.0f;
+    private float ammoniaLevel = 0.0f;
+    private float oxygenLevel = 100.0f;
+    private float nitrite = 0.0f;
 
-    private float ammoniaLevel = 0.0f; // Ammonia concentration
-    private float oxygenLevel = 100.0f; // Oxygen concentration
+    [SerializeField]
+    private WaterBody waterBody; // Reference to the WaterBody component
 
-    public float GetpH()
+    public void AdjustWaterQualityBasedOnSubstrate(Substrate substrate)
     {
-        return pH;
+        pH += substrate.pH_effect;
+        ammoniaLevel += substrate.interactions.water.effectOnAmmonia;
     }
 
-    public float GetOxygenProduction()
+    public void AdjustNutrientLevelsBasedOnSubstrate(Substrate substrate)
     {
-        // Implement logic to calculate and return oxygen production
-        return 0.0f; // Placeholder value, adjust as needed
-    }
-
-    public float GetCO2AbsorptionRate()
-    {
-        // Implement logic to calculate and return CO2 absorption rate
-        return 0.0f; // Placeholder value, adjust as needed
-    }
-
-    public float GetAmmoniaLevel()
-    {
-        // You can implement the logic to calculate and return the ammonia level here
-        // For example:
-        return Mathf.Max(nitrate, potassium, phosphorus);
-    }
-    public float GetOxygenLevel()
-    {
-        // Implement logic to calculate and return the oxygen level here
-        return oxygenLevel;
+        nitrate += substrate.interactions.water.effectOnNitrate;
     }
 
     public void UpdateParameters()
@@ -66,35 +49,109 @@ public class WaterQualityParameters : MonoBehaviour
         SimulateNutrientRelease();
     }
 
-    public void AdjustAlgaePopulation(float amount)
+    public float GetpH()
     {
-        // Implement logic to adjust the algae population
-        algaePopulation += amount;
+        return pH;
     }
 
-    public float GetAlgaePopulation()
+    public float GetAmmoniaLevel()
     {
-        return algaePopulation;
+        return ammoniaLevel;
     }
 
-    public void BacterialConversion()
+    public float GetNitriteLevel()
     {
-        float conversionRate = 0.1f; // example conversion rate, adjust as needed
-        float convertedWaste = wasteLevel * conversionRate;
-        wasteLevel -= convertedWaste;
-        nutrientLevel += convertedWaste;
-        bacteriaPopulation += convertedWaste;
+        return nitrite;
     }
 
-    public void UpdateBacteriaPopulation()
+    public float GetNitrateLevel()
     {
-        float growthRate = 0.05f; // example growth rate, adjust as needed
-        bacteriaPopulation += bacteriaPopulation * growthRate * nutrientLevel;
+        return nitrate;
+    }
+
+    public float GetOxygenLevel()
+    {
+        return oxygenLevel;
+    }
+
+    public float GetOxygenProduction()
+    {
+        // Constants for adjusting oxygen production
+        float maxOxygenProduction = 10.0f; // Maximum oxygen production rate
+        float algaeFactor = 0.1f; // Influence of algae population
+        float temperatureFactor = 0.2f; // Influence of water temperature
+        float nutrientFactor = 0.05f; // Influence of nutrient levels
+
+        // Calculate algae-based oxygen production
+        float algaeOxygen = algaePopulation * algaeFactor;
+
+        // Calculate temperature-based oxygen production
+        float temperatureOxygen = Mathf.Max(0, (temperature - 25.0f) * temperatureFactor);
+
+        // Calculate nutrient-based oxygen production
+        float nutrientOxygen = Mathf.Max(0, nutrientLevel * nutrientFactor);
+
+        // Combine the factors and limit to the maximum production rate
+        float totalOxygenProduction = Mathf.Clamp(algaeOxygen + temperatureOxygen + nutrientOxygen, 0.0f, maxOxygenProduction);
+
+        return totalOxygenProduction;
+    }
+
+    // Property to calculate and return the maximum allowed bacteria population
+    public float MaxBacteriaPopulation
+    {
+        get
+        {
+            if (waterBody != null)
+            {
+                // Calculate the maximum allowed bacteria population based on water body dimensions
+                float maxPopulation = (waterBody.Width * waterBody.Length * waterBody.Depth) / 1000f;
+                return maxPopulation;
+            }
+            else
+            {
+                // Handle the case where waterBody is not assigned
+                Debug.LogError("WaterBody is not assigned! Ensure the WaterBody component is attached to the GameObject.");
+                return 0.0f;
+            }
+        }
+    }
+
+    public float GetCO2AbsorptionRate()
+    {
+        float baseAbsorptionRate = CalculateCO2BaseAbsorptionRate();
+        float randomFactor = Random.Range(0.8f, 1.2f);
+        float calculatedCO2AbsorptionRate = baseAbsorptionRate * randomFactor;
+        return calculatedCO2AbsorptionRate;
+    }
+
+    public float GetTemperature()
+    {
+        return temperature;
+    }
+
+    public void AdjustAmmoniaLevel(float amount)
+    {
+        ammoniaLevel += amount;
+    }
+
+    public void AdjustNitrateLevel(float amount)
+    {
+        nitrate += amount;
+    }
+
+    public void AdjustNitriteLevel(float amount)
+    {
+        nitrite += amount;
+    }
+
+    public void AdjustpHLevel(float amount)
+    {
+        pH += amount;
     }
 
     public void AdjustBacteriaPopulation(float amount)
     {
-        // Implement logic to adjust the bacteria population
         bacteriaPopulation += amount;
     }
 
@@ -105,16 +162,12 @@ public class WaterQualityParameters : MonoBehaviour
 
     public void AdjustWasteLevel(float amount)
     {
-        // Implement logic to adjust the waste level
         wasteLevel += amount;
     }
 
     private void SimulateTemperatureChange()
     {
-        // Simulate daily temperature changes (e.g., based on day-night cycle)
-        temperature += Random.Range(-1.0f, 1.0f); // change by up to 1 degree
-
-        // Adjust nitrate, potassium, phosphorus levels accordingly
+        temperature += Random.Range(-1.0f, 1.0f);
         nitrate += temperature > 28.0f ? 0.1f : -0.1f;
         potassium += temperature > 28.0f ? 0.1f : -0.1f;
         phosphorus += temperature > 28.0f ? 0.1f : -0.1f;
@@ -122,10 +175,7 @@ public class WaterQualityParameters : MonoBehaviour
 
     private void SimulatePHChange()
     {
-        // Simulate pH changes over time based on various factors (e.g., respiration, decomposition)
-        pH += Random.Range(-0.1f, 0.1f); // change by up to 0.1 units
-
-        // Adjust nitrate, potassium, phosphorus levels accordingly
+        pH += Random.Range(-0.1f, 0.1f);
         nitrate += pH < 6.5f ? 0.1f : -0.1f;
         potassium += pH < 6.5f ? 0.1f : -0.1f;
         phosphorus += pH < 6.5f ? 0.1f : -0.1f;
@@ -133,21 +183,18 @@ public class WaterQualityParameters : MonoBehaviour
 
     private void SimulateAmmoniaChange()
     {
-        // Simulate changes in ammonia level over time based on various factors
-        ammoniaLevel += Random.Range(-0.1f, 0.1f); // change by up to 0.1 units
-        ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0.0f, maxAmmoniaLevel); // Clamp within valid range
+        ammoniaLevel += Random.Range(-0.1f, 0.1f);
+        ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0.0f, maxAmmoniaLevel);
     }
 
     private void SimulateOxygenChange()
     {
-        // Simulate changes in oxygen level over time based on various factors
-        oxygenLevel += Random.Range(-0.1f, 0.1f); // change by up to 0.1 units
-        oxygenLevel = Mathf.Clamp(oxygenLevel, minOxygenLevel, maxOxygenLevel); // Clamp within valid range
+        oxygenLevel += Random.Range(-0.1f, 0.1f);
+        oxygenLevel = Mathf.Clamp(oxygenLevel, minOxygenLevel, maxOxygenLevel);
     }
 
     private void SimulateNutrientUptake()
     {
-        // Simulate nutrient uptake by plants over time
         nitrate -= 0.1f;
         potassium -= 0.1f;
         phosphorus -= 0.1f;
@@ -155,41 +202,46 @@ public class WaterQualityParameters : MonoBehaviour
 
     private void SimulateNutrientRelease()
     {
-        // Simulate nutrient release by fish or other factors over time
         nitrate += 0.2f;
         potassium += 0.2f;
         phosphorus += 0.2f;
     }
 
-    public void AdjustNitrateLevel(float amount)
+    private float CalculateCO2BaseAbsorptionRate()
     {
-        // Implement logic to adjust the nitrate level
-        nitrate += amount;
+        float baseRate = 0.0f;
+        return baseRate;
     }
 
-    public void ReduceNutrientLevels(float reductionAmount)
+    public void ReduceNutrientLevels(float nutrientUptakeRate, float amount)
     {
-        nitrate -= reductionAmount;
-        potassium -= reductionAmount;
-        phosphorus -= reductionAmount;
-
-        nitrate = Mathf.Max(nitrate, 0.0f);
-        potassium = Mathf.Max(potassium, 0.0f);
-        phosphorus = Mathf.Max(phosphorus, 0.0f);
-    }
-    public void AdjustAmmoniaLevel(float amount)
-    {
-        // Implement logic to adjust the ammonia level
-        ammoniaLevel += amount;
+        nitrate -= nutrientUptakeRate * amount;
+        potassium -= nutrientUptakeRate * amount;
+        phosphorus -= nutrientUptakeRate * amount;
     }
 
-    public void AdjustpHLevel(float amount)
+    public void BacterialConversion()
     {
-        // Implement logic to adjust the pH level
-        pH += amount;
+        float conversionRate = 0.1f;
+        float convertedWaste = wasteLevel * conversionRate;
+        wasteLevel -= convertedWaste;
+        nutrientLevel += convertedWaste;
+        bacteriaPopulation += convertedWaste;
     }
-    public float GetPotassiumLevel() => potassium;
-    public float GetPhosphorusLevel() => phosphorus;
-    public float GetTemperature() => temperature;
-    public float GetPH() => pH;
+
+    public void UpdateBacteriaPopulation()
+    {
+        float growthRate = 0.05f;
+        bacteriaPopulation += bacteriaPopulation * growthRate * nutrientLevel;
+    }
+
+    public void AdjustAlgaePopulation(float amount)
+    {
+        algaePopulation += amount;
+    }
+
+    public float GetAlgaePopulation()
+    {
+        return algaePopulation;
+    }
 }

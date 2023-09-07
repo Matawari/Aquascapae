@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlantBehavior : MonoBehaviour
@@ -8,11 +6,9 @@ public class PlantBehavior : MonoBehaviour
     public WaterQualityParameters waterQualityManager;
     public GameObject deathIndicator;
     public GameObject wiltingIndicator;
-    public Plant plantData;
+    public PlantTraits plantTraits;
 
     private bool isCollidingWithWater = false;
-    private JSONLoader jsonLoader;
-
     private bool isWilting = false;
     private float wiltingTimer = 0f;
     private float lightConsumptionRate = 0.1f;
@@ -23,17 +19,11 @@ public class PlantBehavior : MonoBehaviour
 
     private void Start()
     {
-        jsonLoader = FindObjectOfType<JSONLoader>();
-        if (jsonLoader == null)
-        {
-            Debug.LogError("JSONLoader not found in the scene. Make sure it exists.");
-            return;
-        }
+        plantTraits = GetComponent<PlantTraits>();
 
-        plantData = jsonLoader.GetPlantDataByName(plantName);
-        if (plantData == null)
+        if (plantTraits == null)
         {
-            Debug.LogError("Plant data not found for: " + plantName);
+            Debug.LogError("PlantTraits component not found on GameObject: " + gameObject.name);
             return;
         }
 
@@ -56,7 +46,10 @@ public class PlantBehavior : MonoBehaviour
         {
             ApplyWaterEffects(waterQualityManager.GetpH(), waterQualityManager.GetAmmoniaLevel(), waterQualityManager.GetNitrateLevel());
 
-            if (plantData.health <= 0 && !isWilting)
+            // Debug health and stress values
+            Debug.Log("Health: " + plantTraits.health + ", Stress: " + plantTraits.stress);
+
+            if (plantTraits.GetHealth() <= 0 && !isWilting)
             {
                 StartWilting();
             }
@@ -65,14 +58,6 @@ public class PlantBehavior : MonoBehaviour
             {
                 UpdateWilting();
             }
-        }
-
-        if (resourcePoolInstance != null)
-        {
-            // Adjusted this section to ensure resourcePoolInstance is not null before using it
-            float consumedLight = resourcePoolInstance.ConsumeResource(ref resourcePoolInstance.lightAvailability, lightConsumptionRate * Time.deltaTime);
-            float consumedNutrient = resourcePoolInstance.ConsumeResource(ref resourcePoolInstance.nutrientAvailability, nutrientConsumptionRate * Time.deltaTime);
-            UpdatePlantBehavior(consumedLight, consumedNutrient);
         }
     }
 
@@ -85,30 +70,68 @@ public class PlantBehavior : MonoBehaviour
 
     public void ApplyWaterEffects(float pHValue, float ammoniaValue, float nitrateValue)
     {
-        if (plantData != null)
+        if (plantTraits != null)
         {
-            if (pHValue < plantData.pH[0] || pHValue > plantData.pH[1])
-            {
-                plantData.health -= 5;
-            }
+            // Calculate the effects of pH, ammonia, and nitrate on health and stress
+            float pHHealthEffect = CalculatePHEffect(pHValue);
+            float ammoniaHealthEffect = CalculateAmmoniaEffect(ammoniaValue);
+            float nitrateHealthEffect = CalculateNitrateEffect(nitrateValue);
 
-            if (ammoniaValue > plantData.ammonia_ppm[1])
-            {
-                plantData.health -= 10;
-            }
+            // Modify plant's health and stress based on the calculated effects
+            plantTraits.health += pHHealthEffect + ammoniaHealthEffect + nitrateHealthEffect;
+            plantTraits.stress += pHHealthEffect + ammoniaHealthEffect + nitrateHealthEffect;
 
-            if (nitrateValue > plantData.nitrate_ppm[1])
-            {
-                plantData.health -= 5;
-            }
-
-            plantData.health = Mathf.Clamp(plantData.health, 0, 100);
+            // Ensure health and stress stay within desired ranges, e.g., [0, 100]
+            plantTraits.health = Mathf.Clamp(plantTraits.health, 0.0f, 100.0f);
+            plantTraits.stress = Mathf.Clamp(plantTraits.stress, 0.0f, 100.0f);
         }
         else
         {
-            Debug.LogWarning("Invalid plant data");
+            Debug.LogWarning("PlantTraits reference is not set.");
         }
     }
+
+
+    private float CalculatePHEffect(float pHValue)
+    {
+        // Implement your logic to calculate the effect of pH on health
+        // For example, you can reduce health if pH is outside an optimal range
+        float optimalPHRangeMin = 6.5f;
+        float optimalPHRangeMax = 7.5f;
+
+        if (pHValue < optimalPHRangeMin || pHValue > optimalPHRangeMax)
+        {
+            return -5.0f; // Adjust the value based on your simulation
+        }
+        return 0.0f; // No effect within the optimal range
+    }
+
+    private float CalculateAmmoniaEffect(float ammoniaValue)
+    {
+        // Implement your logic to calculate the effect of ammonia on health
+        // For example, you can reduce health if ammonia exceeds a certain threshold
+        float maxAmmoniaThreshold = 1.0f;
+
+        if (ammoniaValue > maxAmmoniaThreshold)
+        {
+            return -10.0f; // Adjust the value based on your simulation
+        }
+        return 0.0f; // No effect if ammonia is within limits
+    }
+
+    private float CalculateNitrateEffect(float nitrateValue)
+    {
+        // Implement your logic to calculate the effect of nitrate on health
+        // For example, you can reduce health if nitrate exceeds a certain threshold
+        float maxNitrateThreshold = 1.0f;
+
+        if (nitrateValue > maxNitrateThreshold)
+        {
+            return -5.0f; // Adjust the value based on your simulation
+        }
+        return 0.0f; // No effect if nitrate is within limits
+    }
+
 
     private void Die()
     {
@@ -119,7 +142,7 @@ public class PlantBehavior : MonoBehaviour
             Instantiate(wiltingIndicator, transform.position, Quaternion.identity);
         }
 
-        Debug.Log("Plant died: " + plantData.name);
+        Debug.Log("Plant died: " + plantName);
     }
 
     public void StartWilting()
@@ -137,16 +160,14 @@ public class PlantBehavior : MonoBehaviour
         }
     }
 
-    private float CalculateConsumedLight(PlantBehavior plantBehavior)
+    private float CalculateConsumedLight()
     {
-        float consumedLight = plantBehavior.lightConsumptionRate * Time.deltaTime;
-        return consumedLight;
+        return lightConsumptionRate * Time.deltaTime;
     }
 
-    private float CalculateConsumedNutrient(PlantBehavior plantBehavior)
+    private float CalculateConsumedNutrient()
     {
-        float consumedNutrient = plantBehavior.nutrientConsumptionRate * Time.deltaTime;
-        return consumedNutrient;
+        return nutrientConsumptionRate * Time.deltaTime;
     }
 
     private void OnTriggerEnter(Collider other)
