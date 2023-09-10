@@ -8,12 +8,12 @@ using System.Collections.Generic;
 public class EcosystemManager : MonoBehaviour
 {
     public float timeStep = 1.0f;
-    public float maxBacteriaPopulationThreshold = 5000.0f; // Threshold for high bacterial population warning
+    public float maxBacteriaPopulationThreshold = 5000.0f;
 
     public WaterBody waterBody;
     public WaterQualityParameters waterQuality;
     public PlantBehaviorManager plantBehavior;
-    public List<Substrate> substrates; // Use a list to store multiple substrates
+    public List<Substrate> substrates;
     public PredatorPreyManager predatorPreyManager;
     public LightIntensityManager lightIntensityManager;
     public TemperatureManager temperatureManager;
@@ -24,9 +24,7 @@ public class EcosystemManager : MonoBehaviour
     public Button closeButton;
     public JSONLoader jsonLoader;
 
-    public float maxBacteriaDensityPerArea = 1000.0f; // Maximum bacteria density per square meter
-
-    
+    public float maxBacteriaDensityPerArea = 1000.0f;
 
     private void Start()
     {
@@ -111,10 +109,7 @@ public class EcosystemManager : MonoBehaviour
         {
             if (jsonLoader.substrateData != null)
             {
-                // Populate the substrates list with the loaded substrates
                 substrates = new List<Substrate>(jsonLoader.substrateData.substrates);
-
-                // Check if there are substrates
                 if (substrates.Count == 0)
                 {
                     Debug.LogError("No substrates found in the loaded JSON data.");
@@ -130,16 +125,13 @@ public class EcosystemManager : MonoBehaviour
             Debug.LogError("JSONLoader component not found in the scene.");
         }
 
-        // Calculate the total area of the water body's box collider
         if (waterBody != null)
         {
             Collider waterCollider = waterBody.GetComponent<Collider>();
             if (waterCollider != null)
             {
                 float totalArea = waterCollider.bounds.size.x * waterCollider.bounds.size.z;
-
-                // Set the maximum bacteria density based on the total area
-                maxBacteriaDensityPerArea = 1000000.0f / totalArea; // 1,000,000 bacteria per square meter
+                maxBacteriaDensityPerArea = 1000000.0f / totalArea;
             }
             else
             {
@@ -147,7 +139,6 @@ public class EcosystemManager : MonoBehaviour
             }
         }
     }
-
 
     private void SimulateEcosystem()
     {
@@ -168,7 +159,6 @@ public class EcosystemManager : MonoBehaviour
             {
                 waterQuality.AdjustWaterQualityBasedOnSubstrate(substrate);
             }
-
             waterQuality.UpdateParameters();
         }
     }
@@ -181,7 +171,6 @@ public class EcosystemManager : MonoBehaviour
             {
                 waterQuality.AdjustNutrientLevelsBasedOnSubstrate(substrate);
             }
-
             waterQuality.UpdateNutrientLevels();
         }
     }
@@ -193,7 +182,6 @@ public class EcosystemManager : MonoBehaviour
         {
             foreach (var substrate in substrates)
             {
-                // Assuming each substrate has a reference to a Plant object
                 if (substrate.plant != null)
                 {
                     plantBehavior.SimulatePlantGrowth(substrate.plant);
@@ -204,8 +192,6 @@ public class EcosystemManager : MonoBehaviour
         }
     }
 
-
-
     public float GetCurrentTemperature()
     {
         if (temperatureManager != null)
@@ -214,7 +200,7 @@ public class EcosystemManager : MonoBehaviour
         }
         else
         {
-            return 25.0f; // Default temperature if TemperatureManager is not assigned
+            return 25.0f;
         }
     }
 
@@ -288,13 +274,10 @@ public class EcosystemManager : MonoBehaviour
     {
         if (waterQuality != null)
         {
-            // Bacteria population is now limited by the maximum population based on water body area
             float currentPopulation = Mathf.Clamp(waterQuality.bacteriaPopulation, 0f, maxBacteriaPopulationThreshold);
             waterQuality.bacteriaPopulation = currentPopulation;
         }
     }
-
-
 
     private void OnCloseButtonClick()
     {

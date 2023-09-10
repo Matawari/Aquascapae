@@ -25,10 +25,7 @@ public class FishWaterInteraction : MonoBehaviour
         }
         else
         {
-            // Use the fully qualified name to access the LightSetting class inside JSONLoader
             JSONLoader.LightSetting[] lightSettings = jsonLoader.lightData.lights;
-
-            // Load the fish data from JSONLoader
             jsonLoader.LoadFishData();
         }
     }
@@ -60,11 +57,10 @@ public class FishWaterInteraction : MonoBehaviour
             float nitriteValue = waterQualityManager.GetNitriteLevel();
             float nitrateValue = waterQualityManager.GetNitrateLevel();
             float o2ProductionRate = waterQualityManager.GetOxygenProduction();
-            float co2AbsorptionRate = waterQualityManager.GetCO2AbsorptionRate();
             float currentTemperature = jsonLoader.GetCurrentTemperature();
             float lightIntensityFactor = CalculateLightIntensityFactor();
 
-            fishBehavior.ApplyWaterEffects(fishBehavior.fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, co2AbsorptionRate, currentTemperature);
+            fishBehavior.ApplyWaterEffects(fishBehavior.fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, currentTemperature);
 
             foreach (Fish fishInstance in waterQualityManager.FishInstances)
             {
@@ -73,11 +69,10 @@ public class FishWaterInteraction : MonoBehaviour
 
             if (fishInfoPanel != null)
             {
-                fishInfoPanel.UpdateFishInfo(fish);
+                fishInfoPanel.UpdateFishInfo(fishBehavior.fish);
             }
         }
     }
-
 
     private float CalculateLightIntensityFactor()
     {

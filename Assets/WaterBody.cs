@@ -5,6 +5,8 @@ public class WaterBody : MonoBehaviour
     [Header("Water Body Properties")]
     [SerializeField] private float volume = 100.0f; // Volume of the water body in liters
 
+    public float NutrientUptakeRate { get; set; }
+
     // Properties to access the private fields
     public float Volume
     {

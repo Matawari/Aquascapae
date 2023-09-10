@@ -23,25 +23,14 @@ public class WaterQualityParameters : MonoBehaviour
     [SerializeField] private float oxygenLevel = 100.0f;
     [SerializeField] private float nitrite = 0.0f;
 
-    [SerializeField] private WaterBody waterBody; // Reference to the WaterBody component
+    [SerializeField] private WaterBody waterBody;
+
+    // Add this property for AlgaePopulation.
+    public float AlgaePopulation { get; set; }
+
+    // Add this property for BacteriaPopulation.
+    public float BacteriaPopulation { get; set; }
     
-
-    public float AlgaePopulation
-    {
-        get { return algaePopulation; }
-        set { algaePopulation = value; }
-    }
-
-    public float BacteriaPopulation
-    {
-        get { return bacteriaPopulation; }
-        set { bacteriaPopulation = value; }
-    }
-
-    public void SetBacteriaPopulation(float population)
-    {
-        bacteriaPopulation = population;
-    }
 
     public void AdjustWaterQualityBasedOnSubstrate(Substrate substrate)
     {
@@ -107,31 +96,6 @@ public class WaterQualityParameters : MonoBehaviour
         float totalOxygenProduction = Mathf.Clamp(algaeOxygen + temperatureOxygen + nutrientOxygen, 0.0f, maxOxygenProduction);
 
         return totalOxygenProduction;
-    }
-
-    public float MaxBacteriaPopulation
-    {
-        get
-        {
-            if (waterBody != null)
-            {
-                float maxPopulation = (waterBody.Width * waterBody.Length * waterBody.Depth) / 1000f;
-                return maxPopulation;
-            }
-            else
-            {
-                Debug.LogError("WaterBody is not assigned! Ensure the WaterBody component is attached to the GameObject.");
-                return 0.0f;
-            }
-        }
-    }
-
-    public float GetCO2AbsorptionRate()
-    {
-        float baseAbsorptionRate = CalculateCO2BaseAbsorptionRate();
-        float randomFactor = Random.Range(0.8f, 1.2f);
-        float calculatedCO2AbsorptionRate = baseAbsorptionRate * randomFactor;
-        return calculatedCO2AbsorptionRate;
     }
 
     public float GetTemperature()
@@ -204,9 +168,9 @@ public class WaterQualityParameters : MonoBehaviour
 
     private void SimulateNutrientUptake()
     {
-        nitrate -= 0.1f;
-        potassium -= 0.1f;
-        phosphorus -= 0.1f;
+        nitrate -= waterBody.NutrientUptakeRate;
+        potassium -= waterBody.NutrientUptakeRate;
+        phosphorus -= waterBody.NutrientUptakeRate;
     }
 
     private void SimulateNutrientRelease()
@@ -214,12 +178,6 @@ public class WaterQualityParameters : MonoBehaviour
         nitrate += 0.2f;
         potassium += 0.2f;
         phosphorus += 0.2f;
-    }
-
-    private float CalculateCO2BaseAbsorptionRate()
-    {
-        float baseRate = 0.0f;
-        return baseRate;
     }
 
     public void ReduceNutrientLevels(float nutrientUptakeRate, float amount)
@@ -238,6 +196,22 @@ public class WaterQualityParameters : MonoBehaviour
         bacteriaPopulation += convertedWaste;
     }
 
+    public float MaxBacteriaPopulation
+    {
+        get
+        {
+            if (waterBody != null)
+            {
+                return (waterBody.Width * waterBody.Length * waterBody.Depth) * 10f;
+            }
+            else
+            {
+                Debug.LogError("WaterBody is not assigned! Ensure the WaterBody component is attached to the GameObject.");
+                return 10000.0f;
+            }
+        }
+    }
+
     public void UpdateBacteriaPopulation()
     {
         float growthRate = 0.05f;
@@ -252,5 +226,17 @@ public class WaterQualityParameters : MonoBehaviour
     public float GetAlgaePopulation()
     {
         return algaePopulation;
+    }
+
+    public float GetCO2AbsorptionRate()
+    {
+        float baseAbsorptionRate = 1.0f;
+        float algaeFactor = Mathf.Clamp01(algaePopulation / 1000.0f);
+        float temperatureFactor = Mathf.Clamp01(1.0f - (temperature - 25.0f) * 0.02f);
+        float pHFactor = pH < 7.0f ? pH / 7.0f : 1.0f;
+        float wasteFactor = Mathf.Clamp01(1.0f - wasteLevel * 0.01f);
+        float absorptionRate = baseAbsorptionRate * algaeFactor * temperatureFactor * pHFactor * wasteFactor;
+        float randomFactor = Random.Range(0.8f, 1.2f);
+        return absorptionRate * randomFactor;
     }
 }

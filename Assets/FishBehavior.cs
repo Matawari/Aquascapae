@@ -13,17 +13,9 @@ public class FishBehavior : MonoBehaviour
     public float nutritionValue = 50.0f;
 
     private bool isCollidingWithWater = false;
-    private JSONLoader jsonLoader;
 
     private void Start()
     {
-        jsonLoader = FindObjectOfType<JSONLoader>();
-        if (jsonLoader == null)
-        {
-            Debug.LogError("JSONLoader not found in the scene. Make sure it exists.");
-            return;
-        }
-
         if (fish.isHerbivorous || fish.predatorFoodAmount > 0)
         {
             fishInfoPanel = FindObjectOfType<FishInfoPanel>();
@@ -39,10 +31,9 @@ public class FishBehavior : MonoBehaviour
             float nitriteValue = waterQualityParameters.GetNitriteLevel();
             float nitrateValue = waterQualityParameters.GetNitrateLevel();
             float o2ProductionRate = waterQualityParameters.GetOxygenProduction();
-            float co2AbsorptionRate = waterQualityParameters.GetCO2AbsorptionRate();
-            float currentTemperature = jsonLoader.GetCurrentTemperature();
+            float currentTemperature = waterQualityParameters.GetTemperature();
 
-            ApplyWaterEffects(fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, co2AbsorptionRate, currentTemperature);
+            ApplyWaterEffects(fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, currentTemperature);
 
             if (health <= 0)
             {
@@ -53,7 +44,7 @@ public class FishBehavior : MonoBehaviour
         ApplyBacterialEffects();
     }
 
-    public void ApplyWaterEffects(FishData fishData, float pHValue, float ammoniaValue, float nitriteValue, float nitrateValue, float o2ProductionRate, float co2AbsorptionRate, float currentTemperature)
+    public void ApplyWaterEffects(FishData fishData, float pHValue, float ammoniaValue, float nitriteValue, float nitrateValue, float o2ProductionRate, float currentTemperature)
     {
         float ammoniaEffect = ammoniaValue * 0.1f;
         float nitrateEffect = nitrateValue * 0.05f;
@@ -67,13 +58,30 @@ public class FishBehavior : MonoBehaviour
         }
     }
 
-
     private void ApplyBacterialEffects()
     {
-        float harmfulBacteriaThreshold = 10000.0f;
-        if (waterQualityParameters.bacteriaPopulation > harmfulBacteriaThreshold)
+        float harmfulBacteriaThreshold = waterQualityParameters.MaxBacteriaPopulation * 0.8f;
+        if (waterQualityParameters.BacteriaPopulation > harmfulBacteriaThreshold)
         {
             health -= 5;
+        }
+    }
+
+    public void Grow()
+    {
+        if (health > 50 && nutritionValue > 25)
+        {
+            health += 2.0f;
+            transform.localScale += new Vector3(0.01f, 0.01f, 0.01f);
+        }
+    }
+
+    public void Eat()
+    {
+        if (waterQualityParameters.AlgaePopulation > 10)
+        {
+            nutritionValue += 5.0f;
+            waterQualityParameters.AdjustAlgaePopulation(-5.0f);
         }
     }
 
