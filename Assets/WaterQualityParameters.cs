@@ -25,12 +25,22 @@ public class WaterQualityParameters : MonoBehaviour
 
     [SerializeField] private WaterBody waterBody;
 
-    // Add this property for AlgaePopulation.
     public float AlgaePopulation { get; set; }
-
-    // Add this property for BacteriaPopulation.
     public float BacteriaPopulation { get; set; }
-    
+
+    private float updateInterval = 1f;
+    private float timeSinceLastUpdate = 0f;
+
+    private void Update()
+    {
+        timeSinceLastUpdate += Time.deltaTime;
+        if (timeSinceLastUpdate >= updateInterval)
+        {
+            UpdateParameters();
+            UpdateNutrientLevels();
+            timeSinceLastUpdate = 0f;
+        }
+    }
 
     public void AdjustWaterQualityBasedOnSubstrate(Substrate substrate)
     {
@@ -140,57 +150,57 @@ public class WaterQualityParameters : MonoBehaviour
 
     private void SimulateTemperatureChange()
     {
-        temperature += Random.Range(-1.0f, 1.0f);
-        nitrate += temperature > 28.0f ? 0.1f : -0.1f;
-        potassium += temperature > 28.0f ? 0.1f : -0.1f;
-        phosphorus += temperature > 28.0f ? 0.1f : -0.1f;
+        temperature += Random.Range(-1.0f, 1.0f) * Time.timeScale;
+        nitrate += (temperature > 28.0f ? 0.1f : -0.1f) * Time.timeScale;
+        potassium += (temperature > 28.0f ? 0.1f : -0.1f) * Time.timeScale;
+        phosphorus += (temperature > 28.0f ? 0.1f : -0.1f) * Time.timeScale;
     }
 
     private void SimulatePHChange()
     {
-        pH += Random.Range(-0.1f, 0.1f);
-        nitrate += pH < 6.5f ? 0.1f : -0.1f;
-        potassium += pH < 6.5f ? 0.1f : -0.1f;
-        phosphorus += pH < 6.5f ? 0.1f : -0.1f;
+        pH += Random.Range(-0.1f, 0.1f) * Time.timeScale;
+        nitrate += (pH < 6.5f ? 0.1f : -0.1f) * Time.timeScale;
+        potassium += (pH < 6.5f ? 0.1f : -0.1f) * Time.timeScale;
+        phosphorus += (pH < 6.5f ? 0.1f : -0.1f) * Time.timeScale;
     }
 
     private void SimulateAmmoniaChange()
     {
-        ammoniaLevel += Random.Range(-0.1f, 0.1f);
+        ammoniaLevel += Random.Range(-0.1f, 0.1f) * Time.timeScale;
         ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0.0f, maxAmmoniaLevel);
     }
 
     private void SimulateOxygenChange()
     {
-        oxygenLevel += Random.Range(-0.1f, 0.1f);
+        oxygenLevel += Random.Range(-0.1f, 0.1f) * Time.timeScale;
         oxygenLevel = Mathf.Clamp(oxygenLevel, minOxygenLevel, maxOxygenLevel);
     }
 
     private void SimulateNutrientUptake()
     {
-        nitrate -= waterBody.NutrientUptakeRate;
-        potassium -= waterBody.NutrientUptakeRate;
-        phosphorus -= waterBody.NutrientUptakeRate;
+        nitrate -= waterBody.NutrientUptakeRate * Time.timeScale;
+        potassium -= waterBody.NutrientUptakeRate * Time.timeScale;
+        phosphorus -= waterBody.NutrientUptakeRate * Time.timeScale;
     }
 
     private void SimulateNutrientRelease()
     {
-        nitrate += 0.2f;
-        potassium += 0.2f;
-        phosphorus += 0.2f;
+        nitrate += 0.2f * Time.timeScale;
+        potassium += 0.2f * Time.timeScale;
+        phosphorus += 0.2f * Time.timeScale;
     }
 
     public void ReduceNutrientLevels(float nutrientUptakeRate, float amount)
     {
-        nitrate -= nutrientUptakeRate * amount;
-        potassium -= nutrientUptakeRate * amount;
-        phosphorus -= nutrientUptakeRate * amount;
+        nitrate -= nutrientUptakeRate * amount * Time.timeScale;
+        potassium -= nutrientUptakeRate * amount * Time.timeScale;
+        phosphorus -= nutrientUptakeRate * amount * Time.timeScale;
     }
 
     public void BacterialConversion()
     {
         float conversionRate = 0.1f;
-        float convertedWaste = wasteLevel * conversionRate;
+        float convertedWaste = wasteLevel * conversionRate * Time.timeScale;
         wasteLevel -= convertedWaste;
         nutrientLevel += convertedWaste;
         bacteriaPopulation += convertedWaste;
@@ -215,7 +225,7 @@ public class WaterQualityParameters : MonoBehaviour
     public void UpdateBacteriaPopulation()
     {
         float growthRate = 0.05f;
-        bacteriaPopulation += bacteriaPopulation * growthRate * nutrientLevel;
+        bacteriaPopulation += bacteriaPopulation * growthRate * nutrientLevel * Time.timeScale;
     }
 
     public void AdjustAlgaePopulation(float amount)

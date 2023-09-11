@@ -12,7 +12,7 @@ public class SimulationManager : MonoBehaviour
     public PlantBehavior[] plantBehaviors;
     public AlgaeBehavior[] algaeBehaviors;
     public BacteriaBehavior[] bacteriaBehaviors;
-    public LightCycle lightCycle;
+    public LightIntensityManager lightIntensityManager;
 
     void Start()
     {
@@ -61,7 +61,6 @@ public class SimulationManager : MonoBehaviour
                 bacteriaBehavior.UpdateBacteria();
             }
 
-            lightCycle.UpdateCycle(currentTimeOfLightCycle);
             HandleGameEvents();
         }
     }
@@ -78,15 +77,17 @@ public class SimulationManager : MonoBehaviour
 
     private float CalculateConsumedLight(PlantBehavior plantBehavior)
     {
-        return 0.0f;
+        // Using the light consumption rate from the LightIntensityManager's current light intensity.
+        return lightIntensityManager.currentLightIntensity * Time.deltaTime;
     }
 
     private float CalculateConsumedNutrient(PlantBehavior plantBehavior)
     {
-        return 0.0f;
+        return 0.0f; // Placeholder, adjust with your logic if needed.
     }
 
     private void HandleGameEvents()
     {
+        // Placeholder for any game events you might want to handle.
     }
 }

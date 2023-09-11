@@ -39797,7 +39797,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 685666506}
-  m_LocalRotation: {x: 0.16920157, y: 0.11275765, z: -0.01948969, w: 0.9789161}
+  m_LocalRotation: {x: 0.1692016, y: 0.11275634, z: -0.019489465, w: 0.9789162}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -41187,7 +41187,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 708221335}
-  m_LocalRotation: {x: 0.20464897, y: 0.11197526, z: -0.02357274, w: 0.9721238}
+  m_LocalRotation: {x: 0.20464899, y: 0.11197392, z: -0.023572454, w: 0.972124}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -51027,7 +51027,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 913409100}
-  m_LocalRotation: {x: 0.18693268, y: 0.11238553, z: -0.021532074, w: 0.9756854}
+  m_LocalRotation: {x: 0.1869327, y: 0.11238419, z: -0.021531817, w: 0.9756856}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -57460,7 +57460,7 @@ MonoBehaviour:
   - {fileID: 847899796}
   bacteriaBehaviors:
   - {fileID: 230952409}
-  lightCycle: {fileID: 1287563244}
+  lightIntensityManager: {fileID: 0}
 --- !u!4 &1038028646
 Transform:
   m_ObjectHideFlags: 0
@@ -79368,12 +79368,12 @@ MonoBehaviour:
   health: 0
   initialStress: 0
   stress: 0
-  pHLevel: 1
-  ammoniaLevel: 1
-  nitriteLevel: 1
-  nitrateLevel: 1
-  o2Production: 1
-  co2Level: 1
+  pHLevel: 0
+  ammoniaLevel: 0
+  nitriteLevel: 0
+  nitrateLevel: 0
+  o2Production: 0
+  co2Level: 0
   growthRate: 0
   plantSize: 0
   phosphorusLevel: 0
@@ -99638,12 +99638,12 @@ MonoBehaviour:
   health: 0
   initialStress: 0
   stress: 0
-  pHLevel: 1
-  ammoniaLevel: 1
-  nitriteLevel: 1
-  nitrateLevel: 1
-  o2Production: 1
-  co2Level: 1
+  pHLevel: 0
+  ammoniaLevel: 0
+  nitriteLevel: 0
+  nitrateLevel: 0
+  o2Production: 0
+  co2Level: 0
   growthRate: 0
   plantSize: 0
   phosphorusLevel: 0
@@ -128775,7 +128775,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2115016507}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 61.11988, y: 3.534, z: -3.0455508}
+  m_LocalPosition: {x: 61.119884, y: 3.534, z: -3.0455518}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -131523,8 +131523,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2650234582403667058}
-  m_LocalRotation: {x: 0.18693265, y: 0.11238552, z: -0.021532068, w: 0.9756854}
-  m_LocalPosition: {x: 61.11988, y: 3.534, z: -3.0455508}
+  m_LocalRotation: {x: 0.18693271, y: 0.112384215, z: -0.02153182, w: 0.9756856}
+  m_LocalPosition: {x: 61.119884, y: 3.534, z: -3.0455518}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
