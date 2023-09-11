@@ -16,8 +16,8 @@ public class AlgaeBehavior : MonoBehaviour
 
     private void ApplyAlgaeEffects()
     {
-        float pHEffect = 0.05f;
-        float nitrateEffect = -0.1f;
+        float pHEffect = 0.05f * Time.deltaTime;
+        float nitrateEffect = -0.1f * Time.deltaTime;
 
         waterQualityParameters.AdjustpHLevel(pHEffect);
         waterQualityParameters.AdjustNitrateLevel(nitrateEffect);
@@ -49,7 +49,18 @@ public class AlgaeBehavior : MonoBehaviour
     {
         if (waterQualityParameters.GetAlgaePopulation() >= bloomThreshold)
         {
-            // Implement logic for handling algae bloom
+            // Oxygen Depletion due to decomposition of dead algae
+            float oxygenReduction = 0.2f * Time.deltaTime;
+            waterQualityParameters.AdjustOxygenLevel(-oxygenReduction);
+
+            // Toxin Production
+            float toxinProductionRate = 0.05f * Time.deltaTime;
+            waterQualityParameters.AdjustToxinLevel(toxinProductionRate);
+
+            // Light Blockage
+            float lightBlockageRate = 0.1f * Time.deltaTime;
+            resourcePool.ReduceLightAvailability(lightBlockageRate);
+
         }
     }
 }

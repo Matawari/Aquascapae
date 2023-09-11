@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class ResourcePool : MonoBehaviour
 {
+    [SerializeField] private float lightAvailability = 100.0f; // Assuming a default value
     public float nutrientAvailability = 1000.0f; // Updated nutrient availability
-    public float lightAvailability = 1000.0f; // Updated light availability
 
     public float ConsumeResource(ref float resource, float amount)
     {
@@ -19,9 +19,16 @@ public class ResourcePool : MonoBehaviour
 
     public void AdjustNutrientAvailability(float amount)
     {
-        // Implement logic to adjust the nutrient availability
-        nutrientAvailability += amount;
+        // If light availability is low, reduce the rate of nutrient consumption
+        float lightFactor = lightAvailability / 1000.0f; // Assuming 1000 is the max light availability
+        float adjustedAmount = amount * lightFactor;
+
+        nutrientAvailability += adjustedAmount;
+
+        // Clamping the nutrient availability between 0 and a maximum value (let's assume 2000 for now)
+        nutrientAvailability = Mathf.Clamp(nutrientAvailability, 0.0f, 2000.0f);
     }
+
 
     public float GetNutrientAvailability()
     {
@@ -32,4 +39,13 @@ public class ResourcePool : MonoBehaviour
     {
         return lightAvailability;
     }
+
+    public void ReduceLightAvailability(float amount)
+    {
+        lightAvailability -= amount;
+
+        // Clamping the light availability between 0 and 1000
+        lightAvailability = Mathf.Clamp(lightAvailability, 0.0f, 1000.0f);
+    }
+
 }

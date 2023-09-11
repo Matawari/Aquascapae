@@ -23,11 +23,22 @@ public class WaterQualityParameters : MonoBehaviour
     [SerializeField] private float ammoniaLevel = 0.0f;
     [SerializeField] private float oxygenLevel = 100.0f;
     [SerializeField] private float nitrite = 0.0f;
-
     [SerializeField] private WaterBody waterBody;
 
-    public float AlgaePopulation { get; set; }
-    public float BacteriaPopulation { get; set; }
+    public float toxinLevel = 0.0f;
+    public float GetCurrentOxygenLevel() => oxygenLevel;
+
+    public float AlgaePopulation
+    {
+        get { return algaePopulation; }
+        set { algaePopulation = value; }
+    }
+
+    public float BacteriaPopulation
+    {
+        get { return bacteriaPopulation; }
+        set { bacteriaPopulation = value; }
+    }
 
     private float updateInterval = 1f;
     private float timeSinceLastUpdate = 0f;
@@ -68,7 +79,6 @@ public class WaterQualityParameters : MonoBehaviour
         SimulateNutrientRelease();
     }
 
-    // Methods to get current and forecasted values for each parameter
     public float GetCurrentNitrate() => nitrate;
     public float GetForecastedNitrate(float percentage) => nitrate - (nitrate * percentage);
 
@@ -79,7 +89,7 @@ public class WaterQualityParameters : MonoBehaviour
     public float GetForecastedPhosphorus(float percentage) => phosphorus - (phosphorus * percentage);
 
     public float GetCurrentpH() => pH;
-    public float GetForecastedpH(float percentage) => pH; // Assuming pH doesn't change with water change
+    public float GetForecastedpH(float percentage) => pH;
 
     public float GetCurrentAmmonia() => ammoniaLevel;
     public float GetForecastedAmmonia(float percentage) => ammoniaLevel - (ammoniaLevel * percentage);
@@ -89,30 +99,6 @@ public class WaterQualityParameters : MonoBehaviour
 
     public float GetCurrentNitrite() => nitrite;
     public float GetForecastedNitrite(float percentage) => nitrite - (nitrite * percentage);
-    public float GetpH()
-    {
-        return pH;
-    }
-
-    public float GetAmmoniaLevel()
-    {
-        return ammoniaLevel;
-    }
-
-    public float GetNitriteLevel()
-    {
-        return nitrite;
-    }
-
-    public float GetNitrateLevel()
-    {
-        return nitrate;
-    }
-
-    public float GetOxygenLevel()
-    {
-        return oxygenLevel;
-    }
 
     public float GetOxygenProduction()
     {
@@ -125,49 +111,7 @@ public class WaterQualityParameters : MonoBehaviour
         float temperatureOxygen = Mathf.Max(0, (temperature - 25.0f) * temperatureFactor);
         float nutrientOxygen = Mathf.Max(0, nutrientLevel * nutrientFactor);
 
-        float totalOxygenProduction = Mathf.Clamp(algaeOxygen + temperatureOxygen + nutrientOxygen, 0.0f, maxOxygenProduction);
-
-        return totalOxygenProduction;
-    }
-
-    public float GetTemperature()
-    {
-        return temperature;
-    }
-
-    public void AdjustAmmoniaLevel(float amount)
-    {
-        ammoniaLevel += amount;
-    }
-
-    public void AdjustNitrateLevel(float amount)
-    {
-        nitrate += amount;
-    }
-
-    public void AdjustNitriteLevel(float amount)
-    {
-        nitrite += amount;
-    }
-
-    public void AdjustpHLevel(float amount)
-    {
-        pH += amount;
-    }
-
-    public void AdjustBacteriaPopulation(float amount)
-    {
-        bacteriaPopulation += amount;
-    }
-
-    public float GetWasteLevel()
-    {
-        return wasteLevel;
-    }
-
-    public void AdjustWasteLevel(float amount)
-    {
-        wasteLevel += amount;
+        return Mathf.Clamp(algaeOxygen + temperatureOxygen + nutrientOxygen, 0.0f, maxOxygenProduction);
     }
 
     private void SimulateTemperatureChange()
@@ -274,27 +218,136 @@ public class WaterQualityParameters : MonoBehaviour
 
     public void AdjustNutrientLevels(float amount)
     {
-        // Define the percentage of nutrients released from decomposed organic matter.
-        float ammoniaReleasePercentage = 0.5f; // 50% of the decomposed matter becomes ammonia.
-        float nitrateReleasePercentage = 0.3f; // 30% becomes nitrate.
-        float phosphateReleasePercentage = 0.2f; // 20% becomes phosphate.
+        float ammoniaReleasePercentage = 0.5f;
+        float nitrateReleasePercentage = 0.3f;
+        float phosphateReleasePercentage = 0.2f;
 
-        // Calculate the amount of each nutrient released.
         float ammoniaReleased = amount * ammoniaReleasePercentage;
         float nitrateReleased = amount * nitrateReleasePercentage;
         float phosphateReleased = amount * phosphateReleasePercentage;
 
-        // Adjust the nutrient levels in the water.
         ammoniaLevel += ammoniaReleased;
-        nitrate += nitrateReleased; // Changed from nitrateLevel to nitrate
-        phosphorus += phosphateReleased; // Changed from phosphateLevel to phosphorus
+        nitrate += nitrateReleased;
+        phosphorus += phosphateReleased;
 
-        // Ensure nutrient levels don't exceed their maximum values.
         ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
         nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
-        // Assuming you have a maxPhosphorusLevel defined
         phosphorus = Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
     }
 
+    public void AdjustpHLevel(float amount)
+    {
+        pH += amount;
+        if (amount > 0)
+        {
+            ammoniaLevel += 0.05f * amount;
+        }
+        else
+        {
+            ammoniaLevel -= 0.03f * amount;
+        }
+        ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
+    }
+
+    public void AdjustNitrateLevel(float amount)
+    {
+        nitrate += amount;
+        if (amount > 0)
+        {
+            algaePopulation += 0.1f * amount;
+        }
+        else
+        {
+            algaePopulation -= 0.05f * amount;
+        }
+        algaePopulation = Mathf.Clamp(algaePopulation, 0, 10000.0f);
+        if (algaePopulation > 5000.0f)
+        {
+            oxygenLevel -= 0.05f * (algaePopulation - 5000.0f);
+            oxygenLevel = Mathf.Clamp(oxygenLevel, minOxygenLevel, maxOxygenLevel);
+        }
+    }
+
+    public void AdjustAmmoniaLevel(float amount)
+    {
+        ammoniaLevel += amount;
+        if (amount > 0)
+        {
+            oxygenLevel -= 0.1f * amount;
+        }
+        else
+        {
+            oxygenLevel += 0.05f * amount;
+        }
+        oxygenLevel = Mathf.Clamp(oxygenLevel, minOxygenLevel, maxOxygenLevel);
+    }
+
+    public void AdjustOxygenLevel(float amount)
+    {
+        oxygenLevel += amount;
+        oxygenLevel = Mathf.Clamp(oxygenLevel, 0.0f, maxOxygenLevel);
+    }
+
+    public void AdjustToxinLevel(float amount)
+    {
+        toxinLevel += amount;
+    }
+
+    public float GetOxygenLevel() => oxygenLevel;
+    public float GetToxinLevel() => toxinLevel;
+
+    public void AdjustBacteriaPopulation(float amount)
+    {
+        bacteriaPopulation += amount;
+        float convertedAmmonia = 0.1f * amount;
+        ammoniaLevel -= convertedAmmonia;
+        nitrite += convertedAmmonia;
+
+        float convertedNitrite = 0.1f * amount;
+        nitrite -= convertedNitrite;
+        nitrate += convertedNitrite;
+
+        ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
+        nitrite = Mathf.Clamp(nitrite, 0, maxNitriteLevel);
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
+    }
+
+    public void AdjustWasteLevel(float amount)
+    {
+        wasteLevel += amount;
+        ammoniaLevel += 0.2f * amount;
+        ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
+    }
+
+    public float GetWasteLevel()
+    {
+        return Mathf.Max(0, wasteLevel); // Ensure non-negative
+    }
+
+    public float GetpH()
+    {
+        return Mathf.Clamp(pH, 0, 14); // Ensure within pH range
+    }
+
+    public float GetAmmoniaLevel()
+    {
+        return Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel); // Ensure within range
+    }
+
+    public float GetNitriteLevel()
+    {
+        return Mathf.Clamp(nitrite, 0, maxNitriteLevel); // Ensure within range
+    }
+
+    public float GetNitrateLevel()
+    {
+        return Mathf.Clamp(nitrate, 0, maxNitrateLevel); // Ensure within range
+    }
+
+    public float GetTemperature()
+    {
+        // Assuming a realistic range for water temperature is -5 to 100 Celsius
+        return Mathf.Clamp(temperature, -5, 100);
+    }
 
 }
