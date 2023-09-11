@@ -49,6 +49,7 @@ public class SimulationManager : MonoBehaviour
                 float consumedLight = CalculateConsumedLight(plantBehavior);
                 float consumedNutrient = CalculateConsumedNutrient(plantBehavior);
                 plantBehavior.UpdatePlantBehavior(consumedLight, consumedNutrient);
+                waterQualityParameters.AdjustNitrateLevel(-0.1f); // Plants consume nitrates directly
             }
 
             foreach (var algaeBehavior in algaeBehaviors)
@@ -83,7 +84,7 @@ public class SimulationManager : MonoBehaviour
 
     private float CalculateConsumedNutrient(PlantBehavior plantBehavior)
     {
-        return 0.0f; // Placeholder, adjust with your logic if needed.
+        return plantBehavior.nutrientConsumptionRate * Time.deltaTime; // Assuming plants have a nutrientConsumptionRate property.
     }
 
     private void HandleGameEvents()

@@ -14,6 +14,7 @@ public class FishBehaviorManager : MonoBehaviour
     private void Update()
     {
         SimulateFishBehaviors();
+        AdjustWaterQuality();
     }
 
     private void SimulateFishBehaviors()
@@ -23,6 +24,28 @@ public class FishBehaviorManager : MonoBehaviour
             fishBehavior.Grow();
             fishBehavior.Eat();
         }
+    }
 
+    private void AdjustWaterQuality()
+    {
+        float totalAmmoniaEffect = 0.0f;
+        float totalNitrateEffect = 0.0f;
+
+        foreach (FishBehavior fishBehavior in fishBehaviors)
+        {
+            if (fishBehavior.fish.isHerbivorous)
+            {
+                totalAmmoniaEffect += 0.05f; // Example value, adjust as needed
+                totalNitrateEffect += 0.1f; // Example value, adjust as needed
+            }
+            else if (fishBehavior.fish.predatorFoodAmount > 0)
+            {
+                totalAmmoniaEffect += 0.1f; // Example value, adjust as needed
+                totalNitrateEffect += 0.05f; // Example value, adjust as needed
+            }
+        }
+
+        waterQualityParameters.AdjustAmmoniaLevel(-totalAmmoniaEffect);
+        waterQualityParameters.AdjustNitrateLevel(-totalNitrateEffect);
     }
 }

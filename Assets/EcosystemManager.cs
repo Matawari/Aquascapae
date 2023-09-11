@@ -26,14 +26,17 @@ public class EcosystemManager : MonoBehaviour
 
     public float maxBacteriaDensityPerArea = 1000.0f;
 
+    private float warningCooldown = 10.0f;
+    private float lastWarningTime = -10.0f;
+
+    private bool algaeWarningTriggered = false;
+    private bool bacteriaWarningTriggered = false;
+
     private void Start()
     {
         InitializeComponents();
         warningPanel.SetActive(false);
-        if (closeButton != null)
-        {
-            closeButton.onClick.AddListener(OnCloseButtonClick);
-        }
+        closeButton.onClick.AddListener(OnCloseButtonClick);
     }
 
     private void Update()
@@ -44,100 +47,36 @@ public class EcosystemManager : MonoBehaviour
 
     private void TriggerEvent(string message)
     {
-        if (warningText != null)
-        {
-            warningText.text = message;
-            warningPanel.SetActive(true);
-            StartCoroutine(DeactivateWarningPanelAfterDelay(5.0f));
-        }
+        if (Time.time - lastWarningTime < warningCooldown)
+            return;
 
-        if (warningAudioSource != null && warningSound != null)
-        {
-            warningAudioSource.clip = warningSound;
-            warningAudioSource.Play();
-        }
+        lastWarningTime = Time.time;
+
+        warningText.text = message;
+        warningPanel.SetActive(true);
+        StartCoroutine(DeactivateWarningPanelAfterDelay(5.0f));
+
+        warningAudioSource.clip = warningSound;
+        warningAudioSource.Play();
     }
 
     private IEnumerator DeactivateWarningPanelAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        if (warningPanel != null)
-        {
-            warningPanel.SetActive(false);
-        }
+        warningPanel.SetActive(false);
     }
 
     private void InitializeComponents()
     {
-        if (waterBody == null)
-        {
-            Debug.LogError("WaterBody component not assigned in the inspector. Please ensure it's manually linked.");
-        }
-
+        waterBody = FindObjectOfType<WaterBody>();
         waterQuality = GetComponent<WaterQualityParameters>();
-        if (waterQuality == null)
-        {
-            Debug.LogError("WaterQualityParameters component not found on the GameObject. Please ensure it's attached.");
-        }
-
         plantBehavior = FindObjectOfType<PlantBehaviorManager>();
-        if (plantBehavior == null)
-        {
-            Debug.LogError("PlantBehaviorManager not found in the scene.");
-        }
-
         predatorPreyManager = FindObjectOfType<PredatorPreyManager>();
-        if (predatorPreyManager == null)
-        {
-            Debug.LogError("PredatorPreyManager not found in the scene.");
-        }
-
         lightIntensityManager = FindObjectOfType<LightIntensityManager>();
-        if (lightIntensityManager == null)
-        {
-            Debug.LogError("LightIntensityManager not found in the scene.");
-        }
-
         temperatureManager = FindObjectOfType<TemperatureManager>();
-        if (temperatureManager == null)
-        {
-            Debug.LogError("TemperatureManager not found in the scene.");
-        }
+        jsonLoader = FindObjectOfType<JSONLoader>();
 
-        JSONLoader jsonLoader = FindObjectOfType<JSONLoader>();
-        if (jsonLoader != null)
-        {
-            if (jsonLoader.substrateData != null)
-            {
-                substrates = new List<Substrate>(jsonLoader.substrateData.substrates);
-                if (substrates.Count == 0)
-                {
-                    Debug.LogError("No substrates found in the loaded JSON data.");
-                }
-            }
-            else
-            {
-                Debug.LogError("Substrate data not initialized in JSONLoader.");
-            }
-        }
-        else
-        {
-            Debug.LogError("JSONLoader component not found in the scene.");
-        }
-
-        if (waterBody != null)
-        {
-            Collider waterCollider = waterBody.GetComponent<Collider>();
-            if (waterCollider != null)
-            {
-                float totalArea = waterCollider.bounds.size.x * waterCollider.bounds.size.z;
-                maxBacteriaDensityPerArea = 1000000.0f / totalArea;
-            }
-            else
-            {
-                Debug.LogError("WaterBody Collider not found. Make sure the water body has a Collider component.");
-            }
-        }
+        substrates = new List<Substrate>(jsonLoader.substrateData.substrates);
     }
 
     private void SimulateEcosystem()
@@ -153,137 +92,113 @@ public class EcosystemManager : MonoBehaviour
 
     private void UpdateWaterQuality()
     {
-        if (waterQuality != null && substrates != null && substrates.Count > 0)
+        foreach (var substrate in substrates)
         {
-            foreach (var substrate in substrates)
-            {
-                waterQuality.AdjustWaterQualityBasedOnSubstrate(substrate);
-            }
-            waterQuality.UpdateParameters();
+            waterQuality.AdjustWaterQualityBasedOnSubstrate(substrate);
         }
+        waterQuality.UpdateParameters();
     }
 
     private void SimulateNutrientCycling()
     {
-        if (waterQuality != null && substrates != null && substrates.Count > 0)
+        foreach (var substrate in substrates)
         {
-            foreach (var substrate in substrates)
-            {
-                waterQuality.AdjustNutrientLevelsBasedOnSubstrate(substrate);
-            }
-            waterQuality.UpdateNutrientLevels();
+            waterQuality.AdjustNutrientLevelsBasedOnSubstrate(substrate);
         }
+        waterQuality.UpdateNutrientLevels();
     }
 
     private void SimulatePlantBehavior()
     {
         float currentTemperatureValue = GetCurrentTemperature();
-        if (plantBehavior != null && substrates != null && substrates.Count > 0)
+        foreach (var substrate in substrates)
         {
-            foreach (var substrate in substrates)
+            if (substrate.plant != null)
             {
-                if (substrate.plant != null)
-                {
-                    plantBehavior.SimulatePlantGrowth(substrate.plant);
-                    plantBehavior.SimulateNutrientUptake(substrate.plant);
-                    plantBehavior.SimulateLightSensitivity(substrate.plant);
-                }
+                plantBehavior.SimulatePlantGrowth(substrate.plant);
+                plantBehavior.SimulateNutrientUptake(substrate.plant);
+                plantBehavior.SimulateLightSensitivity(substrate.plant);
             }
         }
     }
 
     public float GetCurrentTemperature()
     {
-        if (temperatureManager != null)
-        {
-            return temperatureManager.GetTemperature();
-        }
-        else
-        {
-            return 25.0f;
-        }
+        return temperatureManager.GetTemperature();
     }
 
     private void SimulatePredatorPreyInteractions()
     {
-        if (predatorPreyManager != null)
-        {
-            predatorPreyManager.SimulateInteractions();
-        }
+        predatorPreyManager.SimulateInteractions();
     }
 
     private void SimulateLightIntensity()
     {
-        if (lightIntensityManager != null)
-        {
-            lightIntensityManager.SimulateLightIntensity();
-        }
+        lightIntensityManager.SimulateLightIntensity();
     }
 
     private void SimulateTemperatureEffects()
     {
-        if (temperatureManager != null)
-        {
-            temperatureManager.SimulateTemperatureEffects();
-        }
+        temperatureManager.SimulateTemperatureEffects();
     }
 
     private void CheckGameEvents()
     {
-        if (waterQuality != null)
+        float algaePopulation = waterQuality.AlgaePopulation;
+        if (algaePopulation >= 1000 && !algaeWarningTriggered)
         {
-            float algaePopulation = waterQuality.AlgaePopulation;
-            if (algaePopulation >= 1000)
-            {
-                TriggerEvent("Warning: Algae overgrowth detected!");
-            }
+            TriggerEvent("Warning: Algae overgrowth detected!");
+            algaeWarningTriggered = true;
+        }
+        else if (algaePopulation < 1000)
+        {
+            algaeWarningTriggered = false;
+        }
 
-            float bacteriaPopulation = waterQuality.BacteriaPopulation;
-            if (bacteriaPopulation >= maxBacteriaPopulationThreshold)
-            {
-                TriggerEvent("Warning: High bacterial population affecting other living things!");
-            }
+        float bacteriaPopulation = waterQuality.BacteriaPopulation;
+        if (bacteriaPopulation >= maxBacteriaPopulationThreshold && !bacteriaWarningTriggered)
+        {
+            TriggerEvent("Warning: High bacterial population affecting other living things!");
+            bacteriaWarningTriggered = true;
+        }
+        else if (bacteriaPopulation < maxBacteriaPopulationThreshold)
+        {
+            bacteriaWarningTriggered = false;
+        }
 
-            float ammoniaLevel = waterQuality.GetAmmoniaLevel();
-            if (ammoniaLevel >= waterQuality.maxAmmoniaLevel * 0.8f)
-            {
-                TriggerEvent("Warning: Ammonia pollution detected!");
-            }
+        float ammoniaLevel = waterQuality.GetAmmoniaLevel();
+        if (ammoniaLevel >= waterQuality.maxAmmoniaLevel * 0.8f)
+        {
+            TriggerEvent("Warning: Ammonia pollution detected!");
+        }
 
-            float nitrateLevel = waterQuality.GetNitrateLevel();
-            if (nitrateLevel >= waterQuality.maxNitrateLevel * 0.8f)
-            {
-                TriggerEvent("Warning: Nitrate pollution detected!");
-            }
+        float nitrateLevel = waterQuality.GetNitrateLevel();
+        if (nitrateLevel >= waterQuality.maxNitrateLevel * 0.8f)
+        {
+            TriggerEvent("Warning: Nitrate pollution detected!");
+        }
 
-            float nitriteLevel = waterQuality.GetNitriteLevel();
-            if (nitriteLevel >= waterQuality.maxNitriteLevel * 0.8f)
-            {
-                TriggerEvent("Warning: Nitrite pollution detected!");
-            }
+        float nitriteLevel = waterQuality.GetNitriteLevel();
+        if (nitriteLevel >= waterQuality.maxNitriteLevel * 0.8f)
+        {
+            TriggerEvent("Warning: Nitrite pollution detected!");
+        }
 
-            float pHLevel = waterQuality.GetpH();
-            if (pHLevel <= 6.0f || pHLevel >= 8.0f)
-            {
-                TriggerEvent("Warning: pH level is out of the optimal range!");
-            }
+        float pHLevel = waterQuality.GetpH();
+        if (pHLevel <= 6.0f || pHLevel >= 8.0f)
+        {
+            TriggerEvent("Warning: pH level is out of the optimal range!");
         }
     }
 
     private void SimulateBacterialEvents()
     {
-        if (waterQuality != null)
-        {
-            float currentPopulation = Mathf.Clamp(waterQuality.bacteriaPopulation, 0f, maxBacteriaPopulationThreshold);
-            waterQuality.bacteriaPopulation = currentPopulation;
-        }
+        float currentPopulation = Mathf.Clamp(waterQuality.bacteriaPopulation, 0f, maxBacteriaPopulationThreshold);
+        waterQuality.bacteriaPopulation = currentPopulation;
     }
 
     private void OnCloseButtonClick()
     {
-        if (warningPanel != null)
-        {
-            warningPanel.SetActive(false);
-        }
+        warningPanel.SetActive(false);
     }
 }

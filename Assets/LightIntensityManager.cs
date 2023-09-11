@@ -14,4 +14,6 @@ public class LightIntensityManager : MonoBehaviour
         // Clamp light intensity to [0, 1]
         currentLightIntensity = Mathf.Clamp(currentLightIntensity, 0, 1);
     }
+
+
 }

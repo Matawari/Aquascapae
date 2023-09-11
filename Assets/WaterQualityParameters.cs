@@ -8,6 +8,7 @@ public class WaterQualityParameters : MonoBehaviour
     public float maxOxygenLevel = 10.0f;
     public float maxNitrateLevel = 1.0f;
     public float maxNitriteLevel = 1.0f;
+    public float maxPhosphorusLevel = 1.0f;
     public float bacteriaPopulation = 1000.0f;
 
     [Header("Water Parameters")]
@@ -67,6 +68,27 @@ public class WaterQualityParameters : MonoBehaviour
         SimulateNutrientRelease();
     }
 
+    // Methods to get current and forecasted values for each parameter
+    public float GetCurrentNitrate() => nitrate;
+    public float GetForecastedNitrate(float percentage) => nitrate - (nitrate * percentage);
+
+    public float GetCurrentPotassium() => potassium;
+    public float GetForecastedPotassium(float percentage) => potassium - (potassium * percentage);
+
+    public float GetCurrentPhosphorus() => phosphorus;
+    public float GetForecastedPhosphorus(float percentage) => phosphorus - (phosphorus * percentage);
+
+    public float GetCurrentpH() => pH;
+    public float GetForecastedpH(float percentage) => pH; // Assuming pH doesn't change with water change
+
+    public float GetCurrentAmmonia() => ammoniaLevel;
+    public float GetForecastedAmmonia(float percentage) => ammoniaLevel - (ammoniaLevel * percentage);
+
+    public float GetCurrentOxygen() => oxygenLevel;
+    public float GetForecastedOxygen(float percentage) => oxygenLevel - (oxygenLevel * percentage);
+
+    public float GetCurrentNitrite() => nitrite;
+    public float GetForecastedNitrite(float percentage) => nitrite - (nitrite * percentage);
     public float GetpH()
     {
         return pH;
@@ -249,4 +271,30 @@ public class WaterQualityParameters : MonoBehaviour
         float randomFactor = Random.Range(0.8f, 1.2f);
         return absorptionRate * randomFactor;
     }
+
+    public void AdjustNutrientLevels(float amount)
+    {
+        // Define the percentage of nutrients released from decomposed organic matter.
+        float ammoniaReleasePercentage = 0.5f; // 50% of the decomposed matter becomes ammonia.
+        float nitrateReleasePercentage = 0.3f; // 30% becomes nitrate.
+        float phosphateReleasePercentage = 0.2f; // 20% becomes phosphate.
+
+        // Calculate the amount of each nutrient released.
+        float ammoniaReleased = amount * ammoniaReleasePercentage;
+        float nitrateReleased = amount * nitrateReleasePercentage;
+        float phosphateReleased = amount * phosphateReleasePercentage;
+
+        // Adjust the nutrient levels in the water.
+        ammoniaLevel += ammoniaReleased;
+        nitrate += nitrateReleased; // Changed from nitrateLevel to nitrate
+        phosphorus += phosphateReleased; // Changed from phosphateLevel to phosphorus
+
+        // Ensure nutrient levels don't exceed their maximum values.
+        ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
+        // Assuming you have a maxPhosphorusLevel defined
+        phosphorus = Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
+    }
+
+
 }

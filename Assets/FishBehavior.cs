@@ -46,15 +46,16 @@ public class FishBehavior : MonoBehaviour
 
     public void ApplyWaterEffects(FishData fishData, float pHValue, float ammoniaValue, float nitriteValue, float nitrateValue, float o2ProductionRate, float currentTemperature)
     {
-        float ammoniaEffect = ammoniaValue * 0.1f;
-        float nitrateEffect = nitrateValue * 0.05f;
+        float ammoniaEffect = ammoniaValue * 0.05f; // Reduced the negative effect
+        float nitrateEffect = nitrateValue * 0.02f; // Reduced the negative effect
 
         health -= ammoniaEffect;
         health -= nitrateEffect;
 
         if (fish.isHerbivorous)
         {
-            resourcePool.AdjustNutrientAvailability(-0.05f);
+            resourcePool.AdjustNutrientAvailability(-0.1f); // Increased nutrient consumption
+            waterQualityParameters.AdjustNitrateLevel(-0.05f); // Herbivorous fish consume nitrates directly
         }
     }
 
@@ -104,7 +105,11 @@ public class FishBehavior : MonoBehaviour
         {
             waterQualityParameters.AdjustBacteriaPopulation(50f);
         }
+
+        // Add the following line to handle decomposition
+        DecompositionManager.Instance.HandleDecomposition(nutritionValue);
     }
+
 
     private void OnTriggerEnter(Collider other)
     {

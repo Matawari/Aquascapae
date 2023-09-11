@@ -21,6 +21,9 @@ public class PlantTraits : MonoBehaviour
     public float plantSize;
     private float nutrientUptakeRate;
 
+    [Header("Nutritional Value")]
+    public float nutritionValue; // Added nutrition value for the plant
+
     public float NutrientUptakeRate => nutrientUptakeRate;
 
     [Header("Physical Characteristics")]

@@ -12,7 +12,7 @@ public class PlantBehavior : MonoBehaviour
     private bool isWilting = false;
     private float wiltingTimer = 0f;
     private float lightConsumptionRate = 0.1f;
-    private float nutrientConsumptionRate = 0.1f;
+    public float nutrientConsumptionRate = 0.1f;
     private float health;
     private float growthRate;
 
@@ -122,7 +122,11 @@ public class PlantBehavior : MonoBehaviour
         }
 
         Debug.Log($"Plant died: {plantName}");
+
+        // Add the following line to handle decomposition
+        DecompositionManager.Instance.HandleDecomposition(plantTraits.nutritionValue);
     }
+
 
     public void StartWilting()
     {
