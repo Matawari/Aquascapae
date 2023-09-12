@@ -20,7 +20,7 @@ public class WaterChangeManager : MonoBehaviour
     public TMP_Text nitriteText;
 
     private bool isWaterChangePanelOpen = false;
-    private bool isConfirmationPanel1Open = true; // Set to true initially
+    private bool isConfirmationPanel1Open = true;
     private bool isConfirmationPanel2Open = false;
 
     private void Start()
@@ -38,7 +38,6 @@ public class WaterChangeManager : MonoBehaviour
             Debug.LogError("WaterChangeSlider is not set in the WaterChangeManager.");
         }
 
-        // Open Confirmation Panel 1 initially
         OpenConfirmationPanel1();
     }
 
@@ -55,12 +54,14 @@ public class WaterChangeManager : MonoBehaviour
 
     public void OpenWaterChangePanel()
     {
+        Time.timeScale = 0; // Freeze time
         waterChangePanel.SetActive(true);
         isWaterChangePanelOpen = true;
     }
 
     public void CloseWaterChangePanel()
     {
+        Time.timeScale = 1; // Resume time
         waterChangePanel.SetActive(false);
         isWaterChangePanelOpen = false;
     }
@@ -91,7 +92,16 @@ public class WaterChangeManager : MonoBehaviour
 
     public void ApplyWaterChange()
     {
-        // Apply the changes to water parameters here.
-        // You can add your logic for applying the changes.
+        // Apply the changes to water parameters based on the slider value
+        waterQualityParameters.ApplyWaterChange(waterChangeSlider.value);
     }
+
+    public void OnConfirmationAccepted()
+    {
+        ApplyWaterChange();
+        CloseWaterChangePanel();
+    }
+
+
+
 }

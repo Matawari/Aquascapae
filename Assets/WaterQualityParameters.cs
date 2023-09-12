@@ -23,22 +23,8 @@ public class WaterQualityParameters : MonoBehaviour
     [SerializeField] private float ammoniaLevel = 0.0f;
     [SerializeField] private float oxygenLevel = 100.0f;
     [SerializeField] private float nitrite = 0.0f;
+    [SerializeField] private float toxinLevel = 0.0f;
     [SerializeField] private WaterBody waterBody;
-
-    public float toxinLevel = 0.0f;
-    public float GetCurrentOxygenLevel() => oxygenLevel;
-
-    public float AlgaePopulation
-    {
-        get { return algaePopulation; }
-        set { algaePopulation = value; }
-    }
-
-    public float BacteriaPopulation
-    {
-        get { return bacteriaPopulation; }
-        set { bacteriaPopulation = value; }
-    }
 
     private float updateInterval = 1f;
     private float timeSinceLastUpdate = 0f;
@@ -58,11 +44,13 @@ public class WaterQualityParameters : MonoBehaviour
     {
         pH += substrate.pH_effect;
         ammoniaLevel += substrate.interactions.water.effectOnAmmonia;
+        ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
     }
 
     public void AdjustNutrientLevelsBasedOnSubstrate(Substrate substrate)
     {
         nitrate += substrate.interactions.water.effectOnNitrate;
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
     }
 
     public void UpdateParameters()
@@ -71,6 +59,13 @@ public class WaterQualityParameters : MonoBehaviour
         SimulatePHChange();
         SimulateAmmoniaChange();
         SimulateOxygenChange();
+        NitrateNaturalDecay();
+    }
+
+    private void NitrateNaturalDecay()
+    {
+        nitrate -= 0.01f * nitrate * Time.deltaTime;
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
     }
 
     public void UpdateNutrientLevels()
@@ -79,55 +74,28 @@ public class WaterQualityParameters : MonoBehaviour
         SimulateNutrientRelease();
     }
 
-    public float GetCurrentNitrate() => nitrate;
-    public float GetForecastedNitrate(float percentage) => nitrate - (nitrate * percentage);
-
-    public float GetCurrentPotassium() => potassium;
-    public float GetForecastedPotassium(float percentage) => potassium - (potassium * percentage);
-
-    public float GetCurrentPhosphorus() => phosphorus;
-    public float GetForecastedPhosphorus(float percentage) => phosphorus - (phosphorus * percentage);
-
-    public float GetCurrentpH() => pH;
-    public float GetForecastedpH(float percentage) => pH;
-
-    public float GetCurrentAmmonia() => ammoniaLevel;
-    public float GetForecastedAmmonia(float percentage) => ammoniaLevel - (ammoniaLevel * percentage);
-
-    public float GetCurrentOxygen() => oxygenLevel;
-    public float GetForecastedOxygen(float percentage) => oxygenLevel - (oxygenLevel * percentage);
-
-    public float GetCurrentNitrite() => nitrite;
-    public float GetForecastedNitrite(float percentage) => nitrite - (nitrite * percentage);
-
-    public float GetOxygenProduction()
-    {
-        float maxOxygenProduction = 10.0f;
-        float algaeFactor = 0.1f;
-        float temperatureFactor = 0.2f;
-        float nutrientFactor = 0.05f;
-
-        float algaeOxygen = algaePopulation * algaeFactor;
-        float temperatureOxygen = Mathf.Max(0, (temperature - 25.0f) * temperatureFactor);
-        float nutrientOxygen = Mathf.Max(0, nutrientLevel * nutrientFactor);
-
-        return Mathf.Clamp(algaeOxygen + temperatureOxygen + nutrientOxygen, 0.0f, maxOxygenProduction);
-    }
-
     private void SimulateTemperatureChange()
     {
-        temperature += Random.Range(-1.0f, 1.0f) * Time.timeScale;
-        nitrate += (temperature > 28.0f ? 0.1f : -0.1f) * Time.timeScale;
-        potassium += (temperature > 28.0f ? 0.1f : -0.1f) * Time.timeScale;
-        phosphorus += (temperature > 28.0f ? 0.1f : -0.1f) * Time.timeScale;
+        temperature += Random.Range(-0.5f, 0.5f) * Time.timeScale;
+        nitrate += (temperature > 28.0f ? 0.01f : -0.05f) * Time.timeScale;
+        potassium += (temperature > 28.0f ? 0.05f : -0.05f) * Time.timeScale;
+        phosphorus += (temperature > 28.0f ? 0.05f : -0.05f) * Time.timeScale;
+
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
+        potassium = Mathf.Clamp(potassium, 0, 100);
+        phosphorus = Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
     }
 
     private void SimulatePHChange()
     {
-        pH += Random.Range(-0.1f, 0.1f) * Time.timeScale;
-        nitrate += (pH < 6.5f ? 0.1f : -0.1f) * Time.timeScale;
-        potassium += (pH < 6.5f ? 0.1f : -0.1f) * Time.timeScale;
-        phosphorus += (pH < 6.5f ? 0.1f : -0.1f) * Time.timeScale;
+        pH += Random.Range(-0.05f, 0.05f) * Time.timeScale;
+        nitrate += (pH < 6.5f ? 0.01f : -0.05f) * Time.timeScale;
+        potassium += (pH < 6.5f ? 0.05f : -0.05f) * Time.timeScale;
+        phosphorus += (pH < 6.5f ? 0.05f : -0.05f) * Time.timeScale;
+
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
+        potassium = Mathf.Clamp(potassium, 0, 100);
+        phosphorus = Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
     }
 
     private void SimulateAmmoniaChange()
@@ -147,13 +115,21 @@ public class WaterQualityParameters : MonoBehaviour
         nitrate -= waterBody.NutrientUptakeRate * Time.timeScale;
         potassium -= waterBody.NutrientUptakeRate * Time.timeScale;
         phosphorus -= waterBody.NutrientUptakeRate * Time.timeScale;
+
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
+        potassium = Mathf.Clamp(potassium, 0, 100);
+        phosphorus = Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
     }
 
     private void SimulateNutrientRelease()
     {
-        nitrate += 0.2f * Time.timeScale;
-        potassium += 0.2f * Time.timeScale;
-        phosphorus += 0.2f * Time.timeScale;
+        nitrate += 0.02f * Time.timeScale;
+        potassium += 0.1f * Time.timeScale;
+        phosphorus += 0.1f * Time.timeScale;
+
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
+        potassium = Mathf.Clamp(potassium, 0, 100);
+        phosphorus = Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
     }
 
     public void ReduceNutrientLevels(float nutrientUptakeRate, float amount)
@@ -161,6 +137,10 @@ public class WaterQualityParameters : MonoBehaviour
         nitrate -= nutrientUptakeRate * amount * Time.timeScale;
         potassium -= nutrientUptakeRate * amount * Time.timeScale;
         phosphorus -= nutrientUptakeRate * amount * Time.timeScale;
+
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
+        potassium = Mathf.Clamp(potassium, 0, 100);
+        phosphorus = Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
     }
 
     public void BacterialConversion()
@@ -258,7 +238,7 @@ public class WaterQualityParameters : MonoBehaviour
         }
         else
         {
-            algaePopulation -= 0.05f * amount;
+            algaePopulation += 0.05f * amount;
         }
         algaePopulation = Mathf.Clamp(algaePopulation, 0, 10000.0f);
         if (algaePopulation > 5000.0f)
@@ -305,7 +285,7 @@ public class WaterQualityParameters : MonoBehaviour
 
         float convertedNitrite = 0.1f * amount;
         nitrite -= convertedNitrite;
-        nitrate += convertedNitrite;
+        nitrate += convertedNitrite * 2f;
 
         ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
         nitrite = Mathf.Clamp(nitrite, 0, maxNitriteLevel);
@@ -319,35 +299,165 @@ public class WaterQualityParameters : MonoBehaviour
         ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
     }
 
+    public float GetNutrientLevel()
+    {
+        return Mathf.Clamp(nutrientLevel, 0, 100);
+    }
+
+    public float GetPhosphorusLevel()
+    {
+        return Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
+    }
+
     public float GetWasteLevel()
     {
-        return Mathf.Max(0, wasteLevel); // Ensure non-negative
+        return Mathf.Max(0, wasteLevel);
     }
 
     public float GetpH()
     {
-        return Mathf.Clamp(pH, 0, 14); // Ensure within pH range
+        return Mathf.Clamp(pH, 0, 14);
     }
 
     public float GetAmmoniaLevel()
     {
-        return Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel); // Ensure within range
+        return Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
     }
 
     public float GetNitriteLevel()
     {
-        return Mathf.Clamp(nitrite, 0, maxNitriteLevel); // Ensure within range
+        return Mathf.Clamp(nitrite, 0, maxNitriteLevel);
     }
 
     public float GetNitrateLevel()
     {
-        return Mathf.Clamp(nitrate, 0, maxNitrateLevel); // Ensure within range
+        return Mathf.Clamp(nitrate, 0, maxNitrateLevel);
     }
 
     public float GetTemperature()
     {
-        // Assuming a realistic range for water temperature is -5 to 100 Celsius
         return Mathf.Clamp(temperature, -5, 100);
     }
 
+    public void ApplyWaterChange(float changeFactor)
+    {
+        nitrate -= nitrate * changeFactor;
+        potassium -= potassium * changeFactor;
+        phosphorus -= phosphorus * changeFactor;
+        ammoniaLevel -= ammoniaLevel * changeFactor;
+        oxygenLevel -= oxygenLevel * changeFactor;
+        nitrite -= nitrite * changeFactor;
+
+        ammoniaLevel = Mathf.Clamp(ammoniaLevel, 0, maxAmmoniaLevel);
+        oxygenLevel = Mathf.Clamp(oxygenLevel, minOxygenLevel, maxOxygenLevel);
+        nitrate = Mathf.Clamp(nitrate, 0, maxNitrateLevel);
+        nitrite = Mathf.Clamp(nitrite, 0, maxNitriteLevel);
+        phosphorus = Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
+    }
+
+    public float GetOxygenProduction()
+    {
+        float algaeOxygenProduction = algaePopulation * 0.05f;
+        float bacteriaOxygenConsumption = bacteriaPopulation * 0.02f;
+        return algaeOxygenProduction - bacteriaOxygenConsumption;
+    }
+
+    public float BacteriaPopulation
+    {
+        get { return bacteriaPopulation; }
+    }
+
+    public float AlgaePopulation
+    {
+        get { return algaePopulation; }
+    }
+
+    public float GetCurrentNitrate()
+    {
+        float bacterialConversionRate = bacteriaPopulation / MaxBacteriaPopulation;
+        nitrate += (ammoniaLevel + nitrite) * bacterialConversionRate;
+
+        float plantUptakeRate = algaePopulation / 2500.0f;
+
+        nitrate -= nitrate * plantUptakeRate;
+
+        return Mathf.Clamp(nitrate, 0, maxNitrateLevel);
+    }
+
+    public float GetCurrentPotassium()
+    {
+        float runoffFactor = temperature > 28.0f ? 0.02f : 0.01f;
+        potassium += runoffFactor;
+
+        float plantUptakeRate = algaePopulation / 10000.0f;
+        potassium -= potassium * plantUptakeRate;
+
+        return Mathf.Clamp(potassium, 0, 100);
+    }
+
+    public float GetCurrentPhosphorus()
+    {
+        float runoffFactor = temperature > 28.0f ? 0.03f : 0.01f;
+        phosphorus += runoffFactor;
+
+        float plantUptakeRate = algaePopulation / 10000.0f;
+        phosphorus -= phosphorus * plantUptakeRate;
+
+        return Mathf.Clamp(phosphorus, 0, maxPhosphorusLevel);
+    }
+
+    public float GetForecastedNitrate(float waterChangeAmount)
+    {
+        return nitrate - (nitrate * waterChangeAmount);
+    }
+
+    public float GetForecastedPotassium(float waterChangeAmount)
+    {
+        return potassium - (potassium * waterChangeAmount);
+    }
+
+    public float GetForecastedPhosphorus(float waterChangeAmount)
+    {
+        return phosphorus - (phosphorus * waterChangeAmount);
+    }
+
+    public float GetCurrentpH()
+    {
+        return pH;
+    }
+
+    public float GetForecastedpH(float waterChangeAmount)
+    {
+        return pH;
+    }
+
+    public float GetCurrentAmmonia()
+    {
+        return ammoniaLevel;
+    }
+
+    public float GetForecastedAmmonia(float waterChangeAmount)
+    {
+        return ammoniaLevel - (ammoniaLevel * waterChangeAmount);
+    }
+
+    public float GetCurrentOxygen()
+    {
+        return oxygenLevel;
+    }
+
+    public float GetForecastedOxygen(float waterChangeAmount)
+    {
+        return oxygenLevel;
+    }
+
+    public float GetCurrentNitrite()
+    {
+        return nitrite;
+    }
+
+    public float GetForecastedNitrite(float waterChangeAmount)
+    {
+        return nitrite - (nitrite * waterChangeAmount);
+    }
 }

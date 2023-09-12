@@ -147,7 +147,7 @@ public class EcosystemManager : MonoBehaviour
         float algaePopulation = waterQuality.AlgaePopulation;
         if (algaePopulation >= 1000 && !algaeWarningTriggered)
         {
-            TriggerEvent("Warning: Algae overgrowth detected!");
+            TriggerEvent("Warning: Algae overgrowth detected! Consider reducing nutrient levels to control algae growth.");
             algaeWarningTriggered = true;
         }
         else if (algaePopulation < 1000)
@@ -158,7 +158,7 @@ public class EcosystemManager : MonoBehaviour
         float bacteriaPopulation = waterQuality.BacteriaPopulation;
         if (bacteriaPopulation >= maxBacteriaPopulationThreshold && !bacteriaWarningTriggered)
         {
-            TriggerEvent("Warning: High bacterial population affecting other living things!");
+            TriggerEvent("Warning: High bacterial population affecting other living things! Consider reducing waste levels to control bacterial growth.");
             bacteriaWarningTriggered = true;
         }
         else if (bacteriaPopulation < maxBacteriaPopulationThreshold)
@@ -169,27 +169,28 @@ public class EcosystemManager : MonoBehaviour
         float ammoniaLevel = waterQuality.GetAmmoniaLevel();
         if (ammoniaLevel >= waterQuality.maxAmmoniaLevel * 0.8f)
         {
-            TriggerEvent("Warning: Ammonia pollution detected!");
+            TriggerEvent("Warning: Ammonia pollution detected! Ensure proper filtration and consider water changes.");
         }
 
         float nitrateLevel = waterQuality.GetNitrateLevel();
-        if (nitrateLevel >= waterQuality.maxNitrateLevel * 0.8f)
+        if (nitrateLevel >= waterQuality.maxNitrateLevel * 0.9f)
         {
-            TriggerEvent("Warning: Nitrate pollution detected!");
+            TriggerEvent("Warning: Severe Nitrate pollution detected! Consider water changes and reducing feedings.");
         }
 
         float nitriteLevel = waterQuality.GetNitriteLevel();
         if (nitriteLevel >= waterQuality.maxNitriteLevel * 0.8f)
         {
-            TriggerEvent("Warning: Nitrite pollution detected!");
+            TriggerEvent("Warning: Nitrite pollution detected! Check the nitrogen cycle and consider adding beneficial bacteria.");
         }
 
         float pHLevel = waterQuality.GetpH();
         if (pHLevel <= 6.0f || pHLevel >= 8.0f)
         {
-            TriggerEvent("Warning: pH level is out of the optimal range!");
+            TriggerEvent("Warning: pH level is out of the optimal range! Consider using pH adjusters or natural methods like driftwood or crushed coral.");
         }
     }
+
 
     private void SimulateBacterialEvents()
     {

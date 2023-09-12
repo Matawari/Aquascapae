@@ -38,11 +38,12 @@ public class SimulationManager : MonoBehaviour
                 float ammoniaValue = waterQualityParameters.GetAmmoniaLevel();
                 float nitriteValue = waterQualityParameters.GetNitriteLevel();
                 float nitrateValue = waterQualityParameters.GetNitrateLevel();
-                float o2ProductionRate = waterQualityParameters.GetCurrentOxygenLevel();
+                float o2ProductionRate = waterQualityParameters.GetCurrentOxygen();  // Corrected this line
                 float currentTemperature = waterQualityParameters.GetTemperature();
 
                 fishBehavior.ApplyWaterEffects(fishBehavior.fishData, pHValue, ammoniaValue, nitriteValue, nitrateValue, o2ProductionRate, currentTemperature);
             }
+
 
             foreach (var plantBehavior in plantBehaviors)
             {
