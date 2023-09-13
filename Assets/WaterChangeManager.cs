@@ -18,6 +18,7 @@ public class WaterChangeManager : MonoBehaviour
     public TMP_Text ammoniaText;
     public TMP_Text oxygenText;
     public TMP_Text nitriteText;
+    public TMP_Text sliderPercentageText; // Text to show the slider percentage
 
     private bool isWaterChangePanelOpen = false;
     private bool isConfirmationPanel1Open = true;
@@ -50,11 +51,16 @@ public class WaterChangeManager : MonoBehaviour
         ammoniaText.text = $"Ammonia: {waterQualityParameters.GetCurrentAmmonia()} >> {waterQualityParameters.GetForecastedAmmonia(waterChangeSlider.value)}";
         oxygenText.text = $"Oxygen: {waterQualityParameters.GetCurrentOxygen()} >> {waterQualityParameters.GetForecastedOxygen(waterChangeSlider.value)}";
         nitriteText.text = $"Nitrite: {waterQualityParameters.GetCurrentNitrite()} >> {waterQualityParameters.GetForecastedNitrite(waterChangeSlider.value)}";
+
+        // Calculate and display the slider percentage
+        float percentage = (waterChangeSlider.value - waterChangeSlider.minValue) / (waterChangeSlider.maxValue - waterChangeSlider.minValue) * 100;
+        sliderPercentageText.text = $"{percentage:F0}%";
     }
 
     public void OpenWaterChangePanel()
     {
         Time.timeScale = 0; // Freeze time
+        waterChangeSlider.value = 0; // Reset the slider to 0 when opening the panel
         waterChangePanel.SetActive(true);
         isWaterChangePanelOpen = true;
     }
@@ -101,7 +107,4 @@ public class WaterChangeManager : MonoBehaviour
         ApplyWaterChange();
         CloseWaterChangePanel();
     }
-
-
-
 }

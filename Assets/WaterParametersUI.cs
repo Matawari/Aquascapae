@@ -23,19 +23,19 @@ public class WaterParametersUI : MonoBehaviour
         // Check if the waterQualityParameters reference is set.
         if (waterQualityParameters != null)
         {
-            // Update the TextMeshPro Text components with the corresponding parameter values.
-            nitrateText.text = $"Nitrate: {waterQualityParameters.GetCurrentNitrate()}";
-            potassiumText.text = $"Potassium: {waterQualityParameters.GetCurrentPotassium()}";
-            phosphorusText.text = $"Phosphorus: {waterQualityParameters.GetCurrentPhosphorus()}";
-            temperatureText.text = $"Temperature: {waterQualityParameters.GetTemperature()}";
-            pHText.text = $"pH: {waterQualityParameters.GetpH()}";
-            wasteLevelText.text = $"Waste Level: {waterQualityParameters.GetWasteLevel()}";
-            nutrientLevelText.text = $"Nutrient Level: {waterQualityParameters.GetNutrientLevel()}";
-            algaePopulationText.text = $"Algae Population: {waterQualityParameters.GetAlgaePopulation()}";
-            ammoniaLevelText.text = $"Ammonia Level: {waterQualityParameters.GetAmmoniaLevel()}";
-            oxygenLevelText.text = $"Oxygen Level: {waterQualityParameters.GetOxygenLevel()}";
-            nitriteText.text = $"Nitrite: {waterQualityParameters.GetNitriteLevel()}";
-            toxinLevelText.text = $"Toxin Level: {waterQualityParameters.GetToxinLevel()}";
+            // Update the TextMeshPro Text components with the corresponding parameter values, rounding to two decimal places.
+            nitrateText.text = $"Nitrate: {waterQualityParameters.GetCurrentNitrate():F2}";
+            potassiumText.text = $"Potassium: {waterQualityParameters.GetCurrentPotassium():F2}";
+            phosphorusText.text = $"Phosphorus: {waterQualityParameters.GetCurrentPhosphorus():F2}";
+            temperatureText.text = $"Temperature: {waterQualityParameters.GetTemperature():F2}";
+            pHText.text = $"pH: {waterQualityParameters.GetpH():F2}";
+            wasteLevelText.text = $"Waste Level: {waterQualityParameters.GetWasteLevel():F2}";
+            nutrientLevelText.text = $"Nutrient Level: {waterQualityParameters.GetNutrientLevel():F2}";
+            algaePopulationText.text = $"Algae Population: {waterQualityParameters.GetAlgaePopulation():F2}";
+            ammoniaLevelText.text = $"Ammonia Level: {waterQualityParameters.GetAmmoniaLevel():F2}";
+            oxygenLevelText.text = $"Oxygen Level: {waterQualityParameters.GetOxygenLevel():F2}";
+            nitriteText.text = $"Nitrite: {waterQualityParameters.GetNitriteLevel():F2}";
+            toxinLevelText.text = $"Toxin Level: {waterQualityParameters.GetToxinLevel():F2}";
         }
         else
         {

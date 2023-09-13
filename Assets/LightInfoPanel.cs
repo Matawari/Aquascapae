@@ -8,21 +8,24 @@ public class LightInfoPanel : MonoBehaviour
     public TextMeshProUGUI typeText;
     public Slider intensitySlider;
     public Slider temperatureSlider;
-    public Slider adjustmentSlider;
     public TextMeshProUGUI descriptionText;
     public TextMeshProUGUI intensityText;
     public TextMeshProUGUI temperatureText;
     public Toggle toggleToggle;
     public Button closeButton;
     public Light lightGameObject;
+    public JSONLoader jsonLoader;
+    public TMP_InputField autoOnHour;
+    public TMP_InputField autoOnMinute;
+    public TMP_InputField autoOffHour;
+    public TMP_InputField autoOffMinute;
 
-    private LightSetting currentLightSetting;
+    private JSONLoader.LightSetting currentLightSetting;
     private float initialIntensityLux;
     private float initialColorTemperatureKelvin;
 
     private const string IntensitySliderKey = "IntensitySlider";
     private const string TemperatureSliderKey = "TemperatureSlider";
-    private const string AdjustmentSliderKey = "AdjustmentSlider";
     private const string LightStateKey = "LightState";
 
     private bool isInitialized = false;
@@ -33,7 +36,6 @@ public class LightInfoPanel : MonoBehaviour
         toggleToggle.onValueChanged.AddListener(ToggleLight);
         intensitySlider.onValueChanged.AddListener(ChangeIntensity);
         temperatureSlider.onValueChanged.AddListener(ChangeColorTemperature);
-        adjustmentSlider.onValueChanged.AddListener(ChangeAdjustment);
 
         if (Application.isPlaying)
         {
@@ -41,7 +43,26 @@ public class LightInfoPanel : MonoBehaviour
         }
     }
 
-    public void UpdateLightInfo(LightSetting lightSetting)
+    public void LoadLightDataByName(string lightName)
+    {
+        if (jsonLoader == null)
+        {
+            Debug.LogError("JSONLoader reference not set in LightInfoPanel");
+            return;
+        }
+
+        JSONLoader.LightSetting lightSetting = jsonLoader.GetLightSettingByName(lightName);
+        if (lightSetting != null)
+        {
+            UpdateLightInfo(lightSetting);
+        }
+        else
+        {
+            Debug.LogError("LightSetting not found for the given name: " + lightName);
+        }
+    }
+
+    public void UpdateLightInfo(JSONLoader.LightSetting lightSetting)
     {
         if (lightSetting != null && lightGameObject != null)
         {
@@ -54,7 +75,6 @@ public class LightInfoPanel : MonoBehaviour
             temperatureSlider.maxValue = initialColorTemperatureKelvin = lightSetting.color_temperature_kelvin;
             intensitySlider.value = GetSavedSliderValue(IntensitySliderKey, initialIntensityLux);
             temperatureSlider.value = GetSavedSliderValue(TemperatureSliderKey, initialColorTemperatureKelvin);
-            adjustmentSlider.value = GetSavedSliderValue(AdjustmentSliderKey, lightSetting.intensity_adjustment_factor);
             descriptionText.text = "Description: " + lightSetting.description;
             toggleToggle.isOn = GetSavedLightState();
             currentLightSetting = lightSetting;
@@ -76,10 +96,7 @@ public class LightInfoPanel : MonoBehaviour
 
     private void ChangeColorTemperature(float kelvinTemperature)
     {
-        if (lightGameObject != null)
-        {
-            UpdateColorTemperature(kelvinTemperature);
-        }
+        UpdateColorTemperature(kelvinTemperature);
     }
 
     private void UpdateLightIntensity(float luxIntensity)
@@ -93,10 +110,7 @@ public class LightInfoPanel : MonoBehaviour
 
     private void ChangeIntensity(float luxIntensity)
     {
-        if (lightGameObject != null)
-        {
-            UpdateLightIntensity(luxIntensity);
-        }
+        UpdateLightIntensity(luxIntensity);
     }
 
     private void UpdateLightState(bool isOn)
@@ -123,7 +137,6 @@ public class LightInfoPanel : MonoBehaviour
     {
         PlayerPrefs.SetFloat(IntensitySliderKey, intensitySlider.value);
         PlayerPrefs.SetFloat(TemperatureSliderKey, temperatureSlider.value);
-        PlayerPrefs.SetFloat(AdjustmentSliderKey, adjustmentSlider.value);
         PlayerPrefs.Save();
     }
 
@@ -152,10 +165,5 @@ public class LightInfoPanel : MonoBehaviour
 
             isInitialized = true;
         }
-    }
-
-    private void ChangeAdjustment(float value)
-    {
-        // Implement your adjustment logic here
     }
 }

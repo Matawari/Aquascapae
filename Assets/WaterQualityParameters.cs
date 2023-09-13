@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class WaterQualityParameters : MonoBehaviour
 {
-    [Header("Water Quality Parameters")]
+    [Header("Water Quality Thresholds")]
     public float maxAmmoniaLevel = 1.0f;
     public float minOxygenLevel = 0.0f;
     public float maxOxygenLevel = 10.0f;
@@ -39,6 +39,7 @@ public class WaterQualityParameters : MonoBehaviour
             timeSinceLastUpdate = 0f;
         }
     }
+
 
     public void AdjustWaterQualityBasedOnSubstrate(Substrate substrate)
     {
@@ -337,6 +338,11 @@ public class WaterQualityParameters : MonoBehaviour
     public float GetTemperature()
     {
         return Mathf.Clamp(temperature, -5, 100);
+    }
+
+    public void SetTemperature(float value)
+    {
+        temperature = Mathf.Clamp(value, -5, 100);
     }
 
     public void ApplyWaterChange(float changeFactor)

@@ -11,10 +11,8 @@ public class InfoSelector : MonoBehaviour
     public LayerMask interactableLayerMask;
     public static ObjectPlacementController instance;
 
-
     private void Update()
     {
-
         if (Input.GetMouseButtonDown(0) && !ObjectPlacementController.instance.IsObjectBeingPlaced())
         {
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
@@ -73,7 +71,8 @@ public class InfoSelector : MonoBehaviour
                     Debug.Log("Hit object is a light.");
                     JSONLoader.LightSetting selectedLightJSON = jsonLoader.GetLightSettingByName(lightBehavior.lightDataName);
 
-                    LightSetting selectedLight = new LightSetting();
+                    // Use JSONLoader.LightSetting instead of LightSetting
+                    JSONLoader.LightSetting selectedLight = new JSONLoader.LightSetting();
                     selectedLight.name = selectedLightJSON.name;
                     selectedLight.type = selectedLightJSON.type;
                     selectedLight.light_intensity_lux = selectedLightJSON.light_intensity_lux;
@@ -91,9 +90,6 @@ public class InfoSelector : MonoBehaviour
                     filterInfoPanel.gameObject.SetActive(false);
                     lightInfoPanel.UpdateLightInfo(selectedLight);
                 }
-
-
-
                 else if (filterBehavior != null)
                 {
                     Debug.Log("Hit object is a filter: " + filterBehavior.filterName);

@@ -306,22 +306,10 @@ public class JSONLoader : MonoBehaviour
 
                 if (algaeData != null)
                 {
-                    Debug.Log("algaeData is not null");
-
                     if (algaeData.algae != null)
                     {
-                        Debug.Log("algaeData.algae is not null");
-                        Debug.Log("Number of algae loaded: " + algaeData.algae.Length);
                         // You can add code to process algae data as needed.
                     }
-                    else
-                    {
-                        Debug.LogError("algaeData.algae is null.");
-                    }
-                }
-                else
-                {
-                    Debug.LogError("algaeData is null.");
                 }
             }
             catch (Exception e)
@@ -347,22 +335,10 @@ public class JSONLoader : MonoBehaviour
 
                 if (bacteriaData != null)
                 {
-                    Debug.Log("bacteriaData is not null");
-
                     if (bacteriaData.bacteria != null)
                     {
-                        Debug.Log("bacteriaData.bacteria is not null");
-                        Debug.Log("Number of bacteria loaded: " + bacteriaData.bacteria.Length);
                         // You can add code to process bacteria data as needed.
                     }
-                    else
-                    {
-                        Debug.LogError("bacteriaData.bacteria is null.");
-                    }
-                }
-                else
-                {
-                    Debug.LogError("bacteriaData is null.");
                 }
             }
             catch (Exception e)
@@ -379,7 +355,6 @@ public class JSONLoader : MonoBehaviour
     public void LoadSubstrateData()
     {
         string jsonFilePath = Path.Combine(Application.streamingAssetsPath, substrateFileName);
-        Debug.Log("Trying to load substrate data from: " + jsonFilePath);
 
         if (File.Exists(jsonFilePath))
         {
@@ -392,10 +367,6 @@ public class JSONLoader : MonoBehaviour
                 {
                     Debug.LogError("Substrate data is null or empty in JSONLoader");
                 }
-                else
-                {
-                    Debug.Log("Number of substrates loaded: " + substrateData.substrates.Length);
-                }
             }
             catch (Exception e)
             {
@@ -407,7 +378,6 @@ public class JSONLoader : MonoBehaviour
             Debug.LogError("Substrate JSON file not found: " + jsonFilePath);
         }
     }
-
 
     [Serializable]
     public class PlantData
@@ -443,8 +413,8 @@ public class JSONLoader : MonoBehaviour
         public float price_usd;
         public string description;
         public bool isOn;
-        public Color color; // Custom color property
-        public float intensity; // Custom intensity property
+        public Color color;
+        public float intensity;
     }
 
     [Serializable]
