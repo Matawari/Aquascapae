@@ -4,6 +4,11 @@ public class LightIntensityManager : MonoBehaviour
 {
     public float currentLightIntensity;
 
+    private void Update()
+    {
+        SimulateLightIntensity();
+    }
+
     public void SimulateLightIntensity()
     {
         // Simple sinusoidal model for day-night light intensity cycle
@@ -14,6 +19,4 @@ public class LightIntensityManager : MonoBehaviour
         // Clamp light intensity to [0, 1]
         currentLightIntensity = Mathf.Clamp(currentLightIntensity, 0, 1);
     }
-
-
 }

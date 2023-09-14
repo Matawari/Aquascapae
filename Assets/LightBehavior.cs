@@ -6,6 +6,8 @@ public class LightBehavior : MonoBehaviour
 
     public float CurrentIntensity { get; private set; }
 
+    private JSONLoader jsonLoader;
+
     private void Start()
     {
         LoadLightSettingFromJSON();
@@ -18,7 +20,7 @@ public class LightBehavior : MonoBehaviour
 
     private void LoadLightSettingFromJSON()
     {
-        JSONLoader jsonLoader = FindObjectOfType<JSONLoader>();
+        jsonLoader = FindObjectOfType<JSONLoader>();
         if (jsonLoader == null)
         {
             Debug.LogError("JSONLoader component not found on this GameObject.");
@@ -28,17 +30,16 @@ public class LightBehavior : MonoBehaviour
 
     private float GetArtificialLightIntensity()
     {
-        JSONLoader jsonLoader = FindObjectOfType<JSONLoader>();
         if (jsonLoader != null)
         {
-            JSONLoader.LightSetting lightSetting = jsonLoader.GetLightSettingByName("LED Full Spectrum");
+            JSONLoader.LightSetting lightSetting = jsonLoader.GetLightSettingByName(lightDataName);
             if (lightSetting != null)
             {
                 return lightSetting.intensity;
             }
             else
             {
-                Debug.LogError("LightSetting not found in JSONLoader");
+                Debug.LogError("LightSetting not found in JSONLoader for name: " + lightDataName);
             }
         }
         else

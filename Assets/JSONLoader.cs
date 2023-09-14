@@ -111,16 +111,27 @@ public class JSONLoader : MonoBehaviour
 
     public LightSetting GetLightSettingByName(string lightDataName)
     {
-        foreach (LightSetting lightSetting in lightData.lights)
+        if (lightData != null && lightData.lights != null)
         {
-            if (lightSetting.name == lightDataName)
+            LightSetting lightSetting = Array.Find(lightData.lights, light => light.name == lightDataName);
+            if (lightSetting != null)
             {
                 return lightSetting;
             }
+            else
+            {
+                Debug.LogError("LightSetting not found in JSONLoader");
+            }
         }
-        Debug.LogError("LightSetting not found in JSONLoader");
+        else
+        {
+            Debug.LogError("Light data or lightData.lights is null.");
+        }
+
         return null;
     }
+
+
 
     public Substrate GetSubstrateDataByName(string substrateName)
     {

@@ -3,9 +3,9 @@ using UnityEngine;
 public class LightBehaviorManager : MonoBehaviour
 {
     public WaterQualityParameters waterQualityParameters;
+    public LightIntensityManager lightIntensityManager;
 
     public string lightDataName;
-    public float currentLightIntensity;
 
     private void Start()
     {
@@ -15,26 +15,19 @@ public class LightBehaviorManager : MonoBehaviour
             enabled = false;
             return;
         }
+
+        if (lightIntensityManager == null)
+        {
+            Debug.LogError("LightIntensityManager reference not set in LightBehaviorManager");
+            enabled = false;
+            return;
+        }
     }
 
     private void Update()
     {
-        // Simulate light intensity
-        SimulateLightIntensity();
-
         // Update water quality based on the current light intensity
-        UpdateWaterQualityWithArtificialLight(currentLightIntensity);
-    }
-
-    private void SimulateLightIntensity()
-    {
-        // Simple sinusoidal model for day-night light intensity cycle
-        float amplitude = 1.0f;
-        float frequency = 0.1f;
-        currentLightIntensity = amplitude * Mathf.Sin(2 * Mathf.PI * frequency * Time.time);
-
-        // Clamp light intensity to [0, 1]
-        currentLightIntensity = Mathf.Clamp(currentLightIntensity, 0, 1);
+        UpdateWaterQualityWithArtificialLight(lightIntensityManager.currentLightIntensity);
     }
 
     private void UpdateWaterQualityWithArtificialLight(float lightIntensity)
@@ -55,5 +48,4 @@ public class LightBehaviorManager : MonoBehaviour
         float newTemperature = waterQualityParameters.GetTemperature() + change;
         waterQualityParameters.SetTemperature(newTemperature);
     }
-
 }

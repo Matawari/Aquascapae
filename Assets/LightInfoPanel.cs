@@ -87,11 +87,7 @@ public class LightInfoPanel : MonoBehaviour
 
     private void UpdateColorTemperature(float kelvinTemperature)
     {
-        if (lightGameObject != null)
-        {
-            lightGameObject.colorTemperature = kelvinTemperature;
-            temperatureText.text = kelvinTemperature.ToString("F1") + " (K)";
-        }
+        temperatureText.text = kelvinTemperature.ToString("F1") + " (K)";
     }
 
     private void ChangeColorTemperature(float kelvinTemperature)
@@ -101,11 +97,8 @@ public class LightInfoPanel : MonoBehaviour
 
     private void UpdateLightIntensity(float luxIntensity)
     {
-        if (lightGameObject != null)
-        {
-            lightGameObject.intensity = luxIntensity;
-            intensityText.text = luxIntensity.ToString("F1") + " (lux)";
-        }
+        lightGameObject.intensity = luxIntensity;
+        intensityText.text = luxIntensity.ToString("F1") + " (lux)";
     }
 
     private void ChangeIntensity(float luxIntensity)
@@ -115,10 +108,7 @@ public class LightInfoPanel : MonoBehaviour
 
     private void UpdateLightState(bool isOn)
     {
-        if (lightGameObject != null)
-        {
-            lightGameObject.enabled = isOn;
-        }
+        lightGameObject.enabled = isOn;
     }
 
     private void ToggleLight(bool isOn)
@@ -162,7 +152,6 @@ public class LightInfoPanel : MonoBehaviour
             UpdateLightIntensity(initialIntensityLux);
             UpdateColorTemperature(initialColorTemperatureKelvin);
             UpdateLightState(toggleToggle.isOn);
-
             isInitialized = true;
         }
     }
