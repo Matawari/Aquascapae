@@ -7,15 +7,25 @@ public class LightBehavior : MonoBehaviour
     public float CurrentIntensity { get; private set; }
 
     private JSONLoader jsonLoader;
+    private Light ledLight; // Reference to the Unity Light component
 
     private void Start()
     {
+        ledLight = GetComponent<Light>();
+        if (ledLight == null)
+        {
+            Debug.LogError("No Light component found on this GameObject.");
+            enabled = false;
+            return;
+        }
+
         LoadLightSettingFromJSON();
     }
 
     private void Update()
     {
         CurrentIntensity = GetArtificialLightIntensity();
+        ledLight.intensity = CurrentIntensity; // Update the Unity light component's intensity
     }
 
     private void LoadLightSettingFromJSON()
@@ -32,10 +42,10 @@ public class LightBehavior : MonoBehaviour
     {
         if (jsonLoader != null)
         {
-            JSONLoader.LightSetting lightSetting = jsonLoader.GetLightSettingByName(lightDataName);
-            if (lightSetting != null)
+            JSONLoader.Lights lights = jsonLoader.GetLightByName(lightDataName);
+            if (lights != null)
             {
-                return lightSetting.intensity;
+                return lights.intensity;
             }
             else
             {

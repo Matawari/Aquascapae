@@ -49,10 +49,18 @@ public class InfoSelector : MonoBehaviour
                 else if (lightBehavior != null)
                 {
                     Debug.Log("Hit object is a light.");
-                    JSONLoader.LightSetting selectedLight = jsonLoader.GetLightSettingByName(lightBehavior.lightDataName);
-                    lightInfoPanel.gameObject.SetActive(true);
-                    lightInfoPanel.UpdateLightInfo(selectedLight);
+                    JSONLoader.Lights selectedLight = jsonLoader.GetLightByName(lightBehavior.lightDataName);
+                    if (selectedLight != null)
+                    {
+                        lightInfoPanel.gameObject.SetActive(true);
+                        lightInfoPanel.UpdateLightInfo(selectedLight);
+                    }
+                    else
+                    {
+                        Debug.LogError("Selected light data is null.");
+                    }
                 }
+
                 else if (filterBehavior != null)
                 {
                     Debug.Log("Hit object is a filter: " + filterBehavior.filterName);

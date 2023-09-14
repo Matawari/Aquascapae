@@ -1,158 +1,275 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections;
+using UnityEngine.EventSystems;
 
 public class LightInfoPanel : MonoBehaviour
 {
-    public TextMeshProUGUI nameLabel;
-    public TextMeshProUGUI typeText;
-    public Slider intensitySlider;
-    public Slider temperatureSlider;
-    public TextMeshProUGUI descriptionText;
-    public TextMeshProUGUI intensityText;
-    public TextMeshProUGUI temperatureText;
-    public Toggle toggleToggle;
-    public Button closeButton;
     public Light lightGameObject;
     public JSONLoader jsonLoader;
-    public TMP_InputField autoOnHour;
-    public TMP_InputField autoOnMinute;
-    public TMP_InputField autoOffHour;
-    public TMP_InputField autoOffMinute;
 
-    private JSONLoader.LightSetting currentLightSetting;
-    private float initialIntensityLux;
-    private float initialColorTemperatureKelvin;
+    public TMP_Text autoOnHour;
+    public TMP_Text autoOnMinute;
+    public TMP_Text autoOffHour;
+    public TMP_Text autoOffMinute;
 
-    private const string IntensitySliderKey = "IntensitySlider";
-    private const string TemperatureSliderKey = "TemperatureSlider";
-    private const string LightStateKey = "LightState";
+    public Button autoOnLeftArrow;
+    public Button autoOnRightArrow;
+    public Button autoOnUpArrow;
+    public Button autoOnDownArrow;
 
-    private bool isInitialized = false;
+    public Button autoOffLeftArrow;
+    public Button autoOffRightArrow;
+    public Button autoOffUpArrow;
+    public Button autoOffDownArrow;
+
+    public Slider intensitySlider;
+    public TextMeshProUGUI intensityText;
+    public Button intensityLeftButton;
+    public Button intensityRightButton;
+
+    public Slider temperatureSlider;
+    public TextMeshProUGUI temperatureText;
+    public Button temperatureLeftButton;
+    public Button temperatureRightButton;
+
+    public Button powerButton;
+
+    private JSONLoader.Lights currentLights;
+    private TMP_Text selectedAutoOnField;
+    private TMP_Text selectedAutoOffField;
+
+    private bool isAdjustingIntensity = false;
+    private bool isAdjustingTemperature = false;
+    private int intensityAdjustmentDirection = 0;
+    private int temperatureAdjustmentDirection = 0;
+    private const float FAST_ADJUSTMENT_SPEED = 0.02f;
 
     private void Start()
     {
-        closeButton.onClick.AddListener(ClosePanel);
-        toggleToggle.onValueChanged.AddListener(ToggleLight);
-        intensitySlider.onValueChanged.AddListener(ChangeIntensity);
-        temperatureSlider.onValueChanged.AddListener(ChangeColorTemperature);
+        powerButton.onClick.AddListener(ToggleLightPower);
 
-        if (Application.isPlaying)
-        {
-            InitializeLightComponent();
-        }
+        autoOnLeftArrow.onClick.AddListener(() => SwitchSelectedField(ref selectedAutoOnField, autoOnHour, autoOnMinute, true));
+        autoOnRightArrow.onClick.AddListener(() => SwitchSelectedField(ref selectedAutoOnField, autoOnHour, autoOnMinute, false));
+        autoOnUpArrow.onClick.AddListener(() => AdjustTime(selectedAutoOnField, 1));
+        autoOnDownArrow.onClick.AddListener(() => AdjustTime(selectedAutoOnField, -1));
+
+        autoOffLeftArrow.onClick.AddListener(() => SwitchSelectedField(ref selectedAutoOffField, autoOffHour, autoOffMinute, true));
+        autoOffRightArrow.onClick.AddListener(() => SwitchSelectedField(ref selectedAutoOffField, autoOffHour, autoOffMinute, false));
+        autoOffUpArrow.onClick.AddListener(() => AdjustTime(selectedAutoOffField, 1));
+        autoOffDownArrow.onClick.AddListener(() => AdjustTime(selectedAutoOffField, -1));
+
+        intensityLeftButton.onClick.AddListener(() => StartAdjustingSlider(intensitySlider, -1));
+        intensityRightButton.onClick.AddListener(() => StartAdjustingSlider(intensitySlider, 1));
+
+        temperatureLeftButton.onClick.AddListener(() => StartAdjustingSlider(temperatureSlider, -1));
+        temperatureRightButton.onClick.AddListener(() => StartAdjustingSlider(temperatureSlider, 1));
+
+        intensitySlider.onValueChanged.AddListener(UpdateIntensityText);
+        temperatureSlider.onValueChanged.AddListener(UpdateTemperatureText);
+
+        AddPointerUpListener(intensityLeftButton, StopAdjustingSlider);
+        AddPointerUpListener(intensityRightButton, StopAdjustingSlider);
+        AddPointerUpListener(temperatureLeftButton, StopAdjustingSlider);
+        AddPointerUpListener(temperatureRightButton, StopAdjustingSlider);
+
+        selectedAutoOnField = autoOnHour;
+        selectedAutoOffField = autoOffHour;
+        StartBlinking(selectedAutoOnField);
+        StartBlinking(selectedAutoOffField);
+
+        intensitySlider.value = intensitySlider.maxValue;
+        temperatureSlider.value = temperatureSlider.maxValue;
     }
 
-    public void LoadLightDataByName(string lightName)
+    private void AddPointerUpListener(Button button, UnityEngine.Events.UnityAction callback)
     {
-        if (jsonLoader == null)
-        {
-            Debug.LogError("JSONLoader reference not set in LightInfoPanel");
-            return;
-        }
+        EventTrigger trigger = button.gameObject.AddComponent<EventTrigger>();
+        EventTrigger.Entry entry = new EventTrigger.Entry();
+        entry.eventID = EventTriggerType.PointerUp;
+        entry.callback.AddListener((eventData) => callback());
+        trigger.triggers.Add(entry);
+    }
 
-        JSONLoader.LightSetting lightSetting = jsonLoader.GetLightSettingByName(lightName);
-        if (lightSetting != null)
+    private void AdjustTime(TMP_Text field, int adjustment)
+    {
+        int value = int.Parse(field.text);
+        if (field == autoOnHour || field == autoOffHour)
         {
-            UpdateLightInfo(lightSetting);
+            value = Mathf.Clamp(value + adjustment, 0, 23);
         }
         else
         {
-            Debug.LogError("LightSetting not found for the given name: " + lightName);
+            value += adjustment;
+            if (value >= 60)
+            {
+                value -= 60;
+            }
+            else if (value < 0)
+            {
+                value += 60;
+            }
+        }
+        field.text = value.ToString("00");
+    }
+
+    private void SwitchSelectedField(ref TMP_Text currentField, TMP_Text hourField, TMP_Text minuteField, bool isLeft)
+    {
+        StopBlinking(currentField);
+        currentField = currentField == hourField ? minuteField : hourField;
+        StartBlinking(currentField);
+        if (isLeft)
+        {
+            // Add logic for blinking once when left button is pressed
         }
     }
 
-    public void UpdateLightInfo(JSONLoader.LightSetting lightSetting)
+    private void StartBlinking(TMP_Text field)
+    {
+        field.enableVertexGradient = true;
+        field.colorGradientPreset = null;
+        field.enableAutoSizing = true;
+    }
+
+    private void StopBlinking(TMP_Text field)
+    {
+        field.enableVertexGradient = false;
+        field.enableAutoSizing = false;
+    }
+
+    private void ToggleLightPower()
+    {
+        lightGameObject.enabled = !lightGameObject.enabled;
+    }
+
+
+
+    private void StartAdjustingSlider(Slider slider, int direction)
+    {
+        if (slider == intensitySlider)
+        {
+            isAdjustingIntensity = true;
+            intensityAdjustmentDirection = direction;
+            StartCoroutine(AdjustIntensity());
+        }
+        else if (slider == temperatureSlider)
+        {
+            isAdjustingTemperature = true;
+            temperatureAdjustmentDirection = direction;
+            StartCoroutine(AdjustTemperature());
+        }
+    }
+
+    private void StopAdjustingSlider()
+    {
+        isAdjustingIntensity = false;
+        isAdjustingTemperature = false;
+    }
+
+    private IEnumerator AdjustIntensity()
+    {
+        while (isAdjustingIntensity)
+        {
+            AdjustSlider(intensitySlider, intensityAdjustmentDirection);
+            yield return new WaitForSeconds(FAST_ADJUSTMENT_SPEED);
+        }
+    }
+
+    private IEnumerator AdjustTemperature()
+    {
+        while (isAdjustingTemperature)
+        {
+            AdjustSlider(temperatureSlider, temperatureAdjustmentDirection);
+            yield return new WaitForSeconds(FAST_ADJUSTMENT_SPEED);
+        }
+    }
+
+    private void AdjustSlider(Slider slider, int adjustment)
+    {
+        float newValue = slider.value + adjustment;
+        if (newValue > slider.maxValue)
+        {
+            slider.value = slider.maxValue;
+        }
+        else if (newValue < 0)
+        {
+            slider.value = 0;
+        }
+        else
+        {
+            slider.value = newValue;
+        }
+    }
+
+    private void UpdateIntensityText(float value)
+    {
+        intensityText.text = Mathf.RoundToInt(value).ToString();
+        lightGameObject.intensity = value / intensitySlider.maxValue;
+    }
+
+    private void UpdateTemperatureText(float value)
+    {
+        temperatureText.text = Mathf.RoundToInt(value).ToString();
+        lightGameObject.color = KelvinToRGB(value);
+    }
+
+    public void UpdateLightInfo(JSONLoader.Lights lightSetting)
     {
         if (lightSetting != null && lightGameObject != null)
         {
-            UpdateLightIntensity(lightSetting.light_intensity_lux);
-            UpdateColorTemperature(lightSetting.color_temperature_kelvin);
-            UpdateLightState(lightSetting.isOn);
-            nameLabel.text = lightSetting.name;
-            typeText.text = "Type: " + lightSetting.type;
-            intensitySlider.maxValue = initialIntensityLux = lightSetting.light_intensity_lux;
-            temperatureSlider.maxValue = initialColorTemperatureKelvin = lightSetting.color_temperature_kelvin;
-            intensitySlider.value = GetSavedSliderValue(IntensitySliderKey, initialIntensityLux);
-            temperatureSlider.value = GetSavedSliderValue(TemperatureSliderKey, initialColorTemperatureKelvin);
-            descriptionText.text = "Description: " + lightSetting.description;
-            toggleToggle.isOn = GetSavedLightState();
-            currentLightSetting = lightSetting;
+            intensitySlider.maxValue = lightSetting.light_intensity_lux;
+            temperatureSlider.maxValue = lightSetting.color_temperature_kelvin;
+
+            intensitySlider.value = intensitySlider.maxValue;
+            temperatureSlider.value = temperatureSlider.maxValue;
+
+            UpdateIntensityText(intensitySlider.value);
+            UpdateTemperatureText(temperatureSlider.value);
+
+            ToggleLight(lightSetting.isOn);
+            currentLights = lightSetting;
         }
         else
         {
-            Debug.LogError("LightSetting or lightGameObject is null in UpdateLightInfo.");
+            Debug.LogError("Lights or lightGameObject is null in UpdateLightInfo.");
         }
     }
 
-    private void UpdateColorTemperature(float kelvinTemperature)
+    private Color KelvinToRGB(float kelvin)
     {
-        temperatureText.text = kelvinTemperature.ToString("F1") + " (K)";
-    }
+        float temp = kelvin / 100;
+        float red, green, blue;
 
-    private void ChangeColorTemperature(float kelvinTemperature)
-    {
-        UpdateColorTemperature(kelvinTemperature);
-    }
+        if (temp <= 66)
+        {
+            red = 255;
+            green = temp;
+            green = 99.4708025861f * Mathf.Log(green) - 161.1195681661f;
+            if (temp <= 19)
+            {
+                blue = 0;
+            }
+            else
+            {
+                blue = temp - 10;
+                blue = 138.5177312231f * Mathf.Log(blue) - 305.0447927307f;
+            }
+        }
+        else
+        {
+            red = temp - 60;
+            red = 329.698727446f * Mathf.Pow(red, -0.1332047592f);
+            green = temp - 60;
+            green = 288.1221695283f * Mathf.Pow(green, -0.0755148492f);
+            blue = 255;
+        }
 
-    private void UpdateLightIntensity(float luxIntensity)
-    {
-        lightGameObject.intensity = luxIntensity;
-        intensityText.text = luxIntensity.ToString("F1") + " (lux)";
-    }
-
-    private void ChangeIntensity(float luxIntensity)
-    {
-        UpdateLightIntensity(luxIntensity);
-    }
-
-    private void UpdateLightState(bool isOn)
-    {
-        lightGameObject.enabled = isOn;
+        return new Color(red / 255.0f, green / 255.0f, blue / 255.0f);
     }
 
     private void ToggleLight(bool isOn)
     {
-        UpdateLightState(isOn);
-    }
-
-    private void ClosePanel()
-    {
-        SaveSliderPositions();
-        SaveLightState(toggleToggle.isOn);
-        gameObject.SetActive(false);
-    }
-
-    private void SaveSliderPositions()
-    {
-        PlayerPrefs.SetFloat(IntensitySliderKey, intensitySlider.value);
-        PlayerPrefs.SetFloat(TemperatureSliderKey, temperatureSlider.value);
-        PlayerPrefs.Save();
-    }
-
-    private float GetSavedSliderValue(string key, float defaultValue)
-    {
-        return PlayerPrefs.HasKey(key) ? PlayerPrefs.GetFloat(key) : defaultValue;
-    }
-
-    private void SaveLightState(bool isOn)
-    {
-        PlayerPrefs.SetInt(LightStateKey, isOn ? 1 : 0);
-    }
-
-    private bool GetSavedLightState()
-    {
-        return PlayerPrefs.HasKey(LightStateKey) ? PlayerPrefs.GetInt(LightStateKey) == 1 : true;
-    }
-
-    private void InitializeLightComponent()
-    {
-        if (!isInitialized)
-        {
-            UpdateLightIntensity(initialIntensityLux);
-            UpdateColorTemperature(initialColorTemperatureKelvin);
-            UpdateLightState(toggleToggle.isOn);
-            isInitialized = true;
-        }
+        lightGameObject.enabled = isOn;
     }
 }

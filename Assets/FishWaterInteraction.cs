@@ -8,7 +8,7 @@ public class FishWaterInteraction : MonoBehaviour
 
     private FishBehavior fishBehavior;
     private bool isCollidingWithWater = false;
-    private LightSetting[] lightSettings;
+    private Lights[] lights;
 
     private void Start()
     {
@@ -25,7 +25,7 @@ public class FishWaterInteraction : MonoBehaviour
         }
         else
         {
-            JSONLoader.LightSetting[] lightSettings = jsonLoader.lightData.lights;
+            JSONLoader.Lights[] lights = jsonLoader.lightData.lights;
             jsonLoader.LoadFishData();
         }
     }
@@ -78,9 +78,9 @@ public class FishWaterInteraction : MonoBehaviour
     {
         float totalIntensityFactor = 0f;
 
-        foreach (LightSetting lightSetting in lightSettings)
+        foreach (Lights lights in lights)
         {
-            float intensityFactor = lightSetting.intensity_adjustment_factor;
+            float intensityFactor = lights.intensity_adjustment_factor;
             totalIntensityFactor += intensityFactor;
         }
 

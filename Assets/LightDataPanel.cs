@@ -25,11 +25,11 @@ public class LightDataPanel : MonoBehaviour
         }
     }
 
-    public void UpdateLightData(LightSetting[] lights)
+    public void UpdateLightData(Lights[] lights)
     {
         if (lights != null && lights.Length > 0)
         {
-            LightSetting firstLight = lights[0];
+            Lights firstLight = lights[0];
 
             Debug.Log("Updating LightDataPanel with: " + firstLight.name);
 

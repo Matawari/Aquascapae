@@ -3,11 +3,11 @@ using UnityEngine;
 [System.Serializable]
 public class LightData
 {
-    public LightSetting[] lights;
+    public Lights[] lights;
 }
 
 [System.Serializable]
-public class LightSetting
+public class Lights
 {
     public string name;
     public string type;

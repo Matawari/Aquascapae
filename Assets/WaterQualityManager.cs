@@ -352,15 +352,15 @@ public class WaterQualityManager : MonoBehaviour
         co2AbsorptionRate += artificialLightIntensity * lightEffectOnCO2Absorption;
     }
 
-    public void UpdateWaterQuality(float artificialLightIntensity, WaterQualityManager waterQualityManager, LightSetting lightSetting)
+    public void UpdateWaterQuality(float artificialLightIntensity, WaterQualityManager waterQualityManager, Lights lights)
     {
         if (waterQualityManager != null)
         {
             waterQualityManager.UpdateWaterQualityWithArtificialLight(artificialLightIntensity);
 
-            if (lightSetting != null)
+            if (lights != null)
             {
-                lightSetting.intensity = artificialLightIntensity; // Update light intensity
+                lights.intensity = artificialLightIntensity; // Update light intensity
             }
         }
     }

@@ -13,9 +13,11 @@ public class JSONLoader : MonoBehaviour
     [SerializeField] private string bacteriaFileName = "bacteria.json";
     [SerializeField] private string substrateFileName = "substrates.json";
 
+
     public PlantData plantData;
     public FilterData filterData = new FilterData();
     public FishData fishData = new FishData();
+    [SerializeField]
     public LightData lightData = new LightData();
     public AlgaeData algaeData = new AlgaeData();
     public BacteriaData bacteriaData = new BacteriaData();
@@ -109,28 +111,32 @@ public class JSONLoader : MonoBehaviour
         }
     }
 
-    public LightSetting GetLightSettingByName(string lightDataName)
+    public Lights GetLightByName(string lightDataName)
     {
-        if (lightData != null && lightData.lights != null)
+        if (lightData == null)
         {
-            LightSetting lightSetting = Array.Find(lightData.lights, light => light.name == lightDataName);
-            if (lightSetting != null)
-            {
-                return lightSetting;
-            }
-            else
-            {
-                Debug.LogError("LightSetting not found in JSONLoader");
-            }
+            Debug.LogError("lightData is null.");
+            return null;
+        }
+
+        if (lightData.lights == null)
+        {
+            Debug.LogError("lightData.lights is null.");
+            return null;
+        }
+
+        Lights lights = Array.Find(lightData.lights, light => light.name == lightDataName);
+        if (lights != null)
+        {
+            return lights;
         }
         else
         {
-            Debug.LogError("Light data or lightData.lights is null.");
+            Debug.LogError("LightSetting not found in JSONLoader");
         }
 
         return null;
     }
-
 
 
     public Substrate GetSubstrateDataByName(string substrateName)
@@ -148,6 +154,8 @@ public class JSONLoader : MonoBehaviour
 
     private void Start()
     {
+
+
         FishInfoPanel fishInfoPanel = FindObjectOfType<FishInfoPanel>();
         if (fishInfoPanel != null && fishInfoPanel.gameObject.activeSelf)
         {
@@ -232,16 +240,15 @@ public class JSONLoader : MonoBehaviour
         }
     }
 
-    public LightData LoadLightData()
+    public void LoadLightData()
     {
-        string lightFilePath = Path.Combine(Application.streamingAssetsPath, lightFileName);
-        if (File.Exists(lightFilePath))
+        string jsonFilePath = Path.Combine(Application.streamingAssetsPath, lightFileName);
+        if (File.Exists(jsonFilePath))
         {
             try
             {
-                string jsonData = File.ReadAllText(lightFilePath);
-                LightData lightData = JsonUtility.FromJson<LightData>(jsonData);
-                return lightData;
+                string jsonData = File.ReadAllText(jsonFilePath);
+                lightData = JsonUtility.FromJson<LightData>(jsonData); // Update lightData using JsonUtility
             }
             catch (Exception e)
             {
@@ -250,10 +257,8 @@ public class JSONLoader : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Light file not found: " + lightFilePath);
+            Debug.LogError("Light file not found: " + jsonFilePath);
         }
-
-        return null;
     }
 
     public void LoadFishData()
@@ -411,10 +416,11 @@ public class JSONLoader : MonoBehaviour
     [Serializable]
     public class LightData
     {
-        public LightSetting[] lights;
+        public Lights[] lights;
     }
 
-    public class LightSetting
+    [Serializable]
+    public class Lights
     {
         public string name;
         public string type;
@@ -424,8 +430,8 @@ public class JSONLoader : MonoBehaviour
         public float price_usd;
         public string description;
         public bool isOn;
-        public Color color;
-        public float intensity;
+        public Color color; // Custom color property
+        public float intensity; // Custom intensity property
     }
 
     [Serializable]
