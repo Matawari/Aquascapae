@@ -6,70 +6,91 @@ using UnityEngine.EventSystems;
 
 public class LightInfoPanel : MonoBehaviour
 {
-    public Light lightGameObject;
-    public JSONLoader jsonLoader;
-    public AudioClip clickSound;
+    [SerializeField]
+    private Light lightGameObject;
+    [SerializeField]
+    private JSONLoader jsonLoader;
+    [SerializeField]
+    private AudioClip clickSound;
     private AudioSource audioSource;
 
-    public TMP_Text autoOnHour;
-    public TMP_Text autoOnMinute;
-    public TMP_Text autoOffHour;
-    public TMP_Text autoOffMinute;
+    [SerializeField]
+    private TMP_Text autoOnHour, autoOnMinute, autoOffHour, autoOffMinute;
 
-    public Button autoOnLeftArrow;
-    public Button autoOnRightArrow;
-    public Button autoOnUpArrow;
-    public Button autoOnDownArrow;
+    [SerializeField]
+    private Button autoOnLeftArrow, autoOnRightArrow, autoOnUpArrow, autoOnDownArrow;
+    [SerializeField]
+    private Button autoOffLeftArrow, autoOffRightArrow, autoOffUpArrow, autoOffDownArrow;
+    [SerializeField]
+    private Slider intensitySlider;
+    [SerializeField]
+    private TextMeshProUGUI intensityText;
+    [SerializeField]
+    private Button intensityLeftButton, intensityRightButton;
+    [SerializeField]
+    private Slider temperatureSlider;
+    [SerializeField]
+    private TextMeshProUGUI temperatureText;
+    [SerializeField]
+    private Button temperatureLeftButton, temperatureRightButton;
+    [SerializeField]
+    private Button powerButton;
+    private bool isAdjusting = false;
 
-    public Button autoOffLeftArrow;
-    public Button autoOffRightArrow;
-    public Button autoOffUpArrow;
-    public Button autoOffDownArrow;
-
-    public Slider intensitySlider;
-    public TextMeshProUGUI intensityText;
-    public Button intensityLeftButton;
-    public Button intensityRightButton;
-
-    public Slider temperatureSlider;
-    public TextMeshProUGUI temperatureText;
-    public Button temperatureLeftButton;
-    public Button temperatureRightButton;
-
-    public Button powerButton;
 
     private JSONLoader.Lights currentLights;
-    private TMP_Text selectedAutoOnField;
-    private TMP_Text selectedAutoOffField;
-    private bool isAdjustingIntensity = false;
-    private bool isAdjustingTemperature = false;
+    private TMP_Text selectedAutoOnField, selectedAutoOffField;
+    private bool isAdjustingIntensity = false, isAdjustingTemperature = false;
     private const float FAST_ADJUSTMENT_SPEED = 0.02f;
+    private Coroutine currentBlinkingCoroutine;
+
+    private void Awake()
+    {
+        if (!audioSource)
+            audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.clip = clickSound;
+    }
 
     private void Start()
+    {
+        SetUpListeners();
+        selectedAutoOnField = autoOnHour;
+        selectedAutoOffField = autoOffHour;
+        StartBlinking(selectedAutoOnField);
+        StartBlinking(selectedAutoOffField);
+
+        LoadSettings();
+    }
+
+    private void SetUpListeners()
     {
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.clip = clickSound;
 
         powerButton.onClick.AddListener(() => { ToggleLightPower(); PlayClickSound(); });
 
-        autoOnLeftArrow.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); SwitchSelectedField(ref selectedAutoOnField, autoOnHour, autoOnMinute); });
-        autoOnRightArrow.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); SwitchSelectedField(ref selectedAutoOnField, autoOnHour, autoOnMinute); });
+        autoOnLeftArrow.onClick.AddListener(() => { PlayClickSound(); SwitchSelectedField(ref selectedAutoOnField, autoOnHour, autoOnMinute); });
+        autoOnRightArrow.onClick.AddListener(() => { PlayClickSound(); SwitchSelectedField(ref selectedAutoOnField, autoOnHour, autoOnMinute); });
         autoOnUpArrow.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); AdjustTime(selectedAutoOnField, 1); });
         autoOnDownArrow.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); AdjustTime(selectedAutoOnField, -1); });
 
-        autoOffLeftArrow.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); SwitchSelectedField(ref selectedAutoOffField, autoOffHour, autoOffMinute); });
-        autoOffRightArrow.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); SwitchSelectedField(ref selectedAutoOffField, autoOffHour, autoOffMinute); });
+        autoOffLeftArrow.onClick.AddListener(() => { PlayClickSound(); SwitchSelectedField(ref selectedAutoOffField, autoOffHour, autoOffMinute); });
+        autoOffRightArrow.onClick.AddListener(() => { PlayClickSound(); SwitchSelectedField(ref selectedAutoOffField, autoOffHour, autoOffMinute); });
         autoOffUpArrow.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); AdjustTime(selectedAutoOffField, 1); });
         autoOffDownArrow.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); AdjustTime(selectedAutoOffField, -1); });
 
-        intensityLeftButton.onClick.AddListener(() => { StartAdjustingSlider(intensitySlider, -1); PlayClickSound(); });
-        intensityRightButton.onClick.AddListener(() => { StartAdjustingSlider(intensitySlider, 1); PlayClickSound(); });
-
-        temperatureLeftButton.onClick.AddListener(() => { StartAdjustingSlider(temperatureSlider, -1); PlayClickSound(); });
-        temperatureRightButton.onClick.AddListener(() => { StartAdjustingSlider(temperatureSlider, 1); PlayClickSound(); });
-
         intensitySlider.onValueChanged.AddListener(UpdateIntensityText);
         temperatureSlider.onValueChanged.AddListener(UpdateTemperatureText);
+
+        AddPointerUpListener(intensityLeftButton, StopAdjustingSlider);
+        AddPointerUpListener(intensityRightButton, StopAdjustingSlider);
+        AddPointerUpListener(temperatureLeftButton, StopAdjustingSlider);
+        AddPointerUpListener(temperatureRightButton, StopAdjustingSlider);
+
+        intensityLeftButton.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); AdjustSlider(intensitySlider, -1); });
+        intensityRightButton.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); AdjustSlider(intensitySlider, 1); });
+        temperatureLeftButton.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); AdjustSlider(temperatureSlider, -1); });
+        temperatureRightButton.onClick.AddListener(() => { StopAllCoroutines(); PlayClickSound(); AdjustSlider(temperatureSlider, 1); });
 
         AddPointerDownListener(intensityLeftButton, () => StartCoroutine(ContinuousAdjustSlider(intensitySlider, -1)));
         AddPointerDownListener(intensityRightButton, () => StartCoroutine(ContinuousAdjustSlider(intensitySlider, 1)));
@@ -77,6 +98,7 @@ public class LightInfoPanel : MonoBehaviour
         AddPointerDownListener(temperatureRightButton, () => StartCoroutine(ContinuousAdjustSlider(temperatureSlider, 1)));
 
         AddPointerDownListener(autoOnLeftArrow, () => StartCoroutine(ContinuousSwitchField(selectedAutoOnField, autoOnHour, autoOnMinute)));
+        AddPointerUpListener(autoOnLeftArrow, StopAllCoroutines);
         AddPointerDownListener(autoOnRightArrow, () => StartCoroutine(ContinuousSwitchField(selectedAutoOnField, autoOnHour, autoOnMinute)));
         AddPointerDownListener(autoOnUpArrow, () => StartCoroutine(ContinuousAdjustTime(selectedAutoOnField, 1)));
         AddPointerDownListener(autoOnDownArrow, () => StartCoroutine(ContinuousAdjustTime(selectedAutoOnField, -1)));
@@ -96,6 +118,27 @@ public class LightInfoPanel : MonoBehaviour
 
         LoadSettings();
     }
+
+
+
+    public Light LightGameObject
+    {
+        get { return lightGameObject; }
+        set { lightGameObject = value; }
+    }
+
+    public Slider IntensitySlider
+    {
+        get { return intensitySlider; }
+        set { intensitySlider = value; }
+    }
+
+    public Slider TemperatureSlider
+    {
+        get { return temperatureSlider; }
+        set { temperatureSlider = value; }
+    }
+
 
     private void Update()
     {
@@ -162,30 +205,24 @@ public class LightInfoPanel : MonoBehaviour
 
     private IEnumerator ContinuousAdjustSlider(Slider slider, int direction)
     {
-        while (slider == intensitySlider ? isAdjustingIntensity : isAdjustingTemperature)
+        while (isAdjusting)
         {
             AdjustSlider(slider, direction);
             yield return new WaitForSeconds(FAST_ADJUSTMENT_SPEED);
         }
     }
 
+
     private void StartAdjustingSlider(Slider slider, int direction)
     {
-        if (slider == intensitySlider)
-        {
-            isAdjustingIntensity = true;
-        }
-        else if (slider == temperatureSlider)
-        {
-            isAdjustingTemperature = true;
-        }
+        isAdjusting = true;
     }
 
     private void StopAdjustingSlider()
     {
-        isAdjustingIntensity = false;
-        isAdjustingTemperature = false;
+        isAdjusting = false;
     }
+
 
     private void AdjustTime(TMP_Text field, int adjustment)
     {
@@ -211,19 +248,39 @@ public class LightInfoPanel : MonoBehaviour
 
     private void SwitchSelectedField(ref TMP_Text currentField, TMP_Text hourField, TMP_Text minuteField)
     {
-        StopBlinking(currentField);
+        StopBlinking();
         currentField = currentField == hourField ? minuteField : hourField;
         StartBlinking(currentField);
     }
 
-    private void StartBlinking(TMP_Text field)
+
+    private IEnumerator BlinkText(TMP_Text field)
     {
-        field.enableVertexGradient = true;
+        while (true)
+        {
+            field.alpha = 0.5f; // Half transparent
+            yield return new WaitForSeconds(0.5f); // Wait for 0.5 seconds
+            field.alpha = 1.0f; // Fully opaque
+            yield return new WaitForSeconds(0.5f); // Wait for 0.5 seconds
+        }
     }
 
-    private void StopBlinking(TMP_Text field)
+    private void StartBlinking(TMP_Text field)
     {
-        field.enableVertexGradient = false;
+        if (currentBlinkingCoroutine != null)
+        {
+            StopCoroutine(currentBlinkingCoroutine);
+        }
+        currentBlinkingCoroutine = StartCoroutine(BlinkText(field));
+    }
+
+    private void StopBlinking()
+    {
+        if (currentBlinkingCoroutine != null)
+        {
+            StopCoroutine(currentBlinkingCoroutine);
+            currentBlinkingCoroutine = null;
+        }
     }
 
     private void ToggleLightPower()
