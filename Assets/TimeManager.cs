@@ -7,9 +7,11 @@ public class TimeManager : MonoBehaviour
     private int week = 1;
     private int day = 1;
     public float timeScaleFactor = 6.0f; // 1 hour in game = 10 minutes in real life
+    private float timeIncrement;
 
     private void Start()
     {
+        timeIncrement = (86400.0f / timeScaleFactor) / Time.timeScale; // 1 day in game
         StartCoroutine(IncrementDay());
     }
 
@@ -17,12 +19,12 @@ public class TimeManager : MonoBehaviour
     {
         while (true)
         {
-            float timeIncrement = (86400.0f / timeScaleFactor) / Time.timeScale; // 1 day in game
             day++;
             UpdateCalendarText(); // Update calendar text
             yield return new WaitForSeconds(timeIncrement);
         }
     }
+
 
     private void UpdateCalendarText()
     {

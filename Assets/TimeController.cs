@@ -8,7 +8,8 @@ public class TimeController : MonoBehaviour
     public float fastForwardMultiplier = 2f;
     private bool isPaused;
     private float timeScale = 1f;
-    private float currentTime = 0f; // Current time in seconds
+    private float currentTime = 28800f; // 08:00:00 in seconds (8 * 3600)
+
 
     public TextMeshProUGUI stateText;
     public TextMeshProUGUI clockText; // Reference to the TMP Text element for the clock
